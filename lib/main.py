@@ -17,4 +17,26 @@ def main():
     pyautogui.keyUp('right')
     print("Done")
 
-main()
+# main()
+
+def AKsilver(coordinates_list):
+    # Delay before starting
+    time.sleep(5)
+
+    # Iterate through the list and move to each coordinate and click
+    for coords in coordinates_list:
+        x, y = coords['x'], coords['y']
+        pyautogui.moveTo(x, y, duration=1)  # Move to the coordinate
+        pyautogui.click()  # Click at the current position
+
+    # Optional delay after clicking
+        time.sleep(10)
+
+# Define the list of coordinates
+coordinates_list = [{'x': 1435, 'y': 758},
+                   {'x': 1376, 'y': 696},
+                   {'x': 1475, 'y': 302},
+                   {'x': 1444, 'y': 763}]
+
+# Call the AKsilver function
+AKsilver(coordinates_list)
