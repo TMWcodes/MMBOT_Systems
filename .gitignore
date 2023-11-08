@@ -3,3 +3,8 @@ package.json
 package-lock.json
 workingNotes.md
 myenv/
+gui.md
+testing.md
+testing.py
+system.py
+data.md

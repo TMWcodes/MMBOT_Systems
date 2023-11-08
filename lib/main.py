@@ -21,26 +21,39 @@ def main():
 
 # main()
 def bv_coal():
-    coal_coords = [{'x': 1431, 'y': 586}, {'x': 1519, 'y': 587}, {'x': 1467, 'y': 685}, {'x': 1244, 'y': 405}]
+    coal_coords = {
+        'rock1': [{'x': 1432, 'y': 591}, {'x': 1403, 'y': 615}, {'x': 1451, 'y': 636}],
+        'rock2': [{'x': 1532, 'y': 607}, {'x': 1497, 'y': 624}, {'x': 1526, 'y': 655}],
+        'rock3': [{'x': 1422, 'y': 682}, {'x': 1473, 'y': 699}, {'x': 1434, 'y': 719}],
+        'rock4': [{'x': 1221, 'y': 376}, {'x': 1232, 'y': 399}, {'x': 1219, 'y': 419}]
+    }
     time.sleep(5)
     while True:
-        # Iterate through the list and move to each coordinate and click
-        for coords in coal_coords:
-            x, y = coords['x'], coords['y']
+        for rock, coords in coal_coords.items():
+            print(f"Performing tasks for {rock}")
 
-            # Add random offsets to the target coordinates
-            x += random.randint(-5, 5)  # Adjust the offset range as needed
-            y += random.randint(-5, 5)  # Adjust the offset range as needed
+            coord_set = random.choice(coords)  # Choose a random coordinate set for the current rock
+            x, y = coord_set['x'], coord_set['y']
+            print(f'Moving mouse to {x},{y}')
+            x += random.randint(-5, 5)
+            y += random.randint(-5, 5)
+            print(f'Moving rand mouse to {x},{y}')
+            pyautogui.moveTo(x, y, duration=1, tween=pyautogui.easeInQuad)
+            time.sleep(1)
+            pyautogui.click()
 
-            pyautogui.moveTo(x, y, duration=1, tween=pyautogui.easeInQuad)  # Move to the coordinate with easeInQuad
-            pyautogui.click()  # Click at the current position
+            base_wait_time = 14
+            random_variation = random.uniform(-0.2 * base_wait_time, 0.2 * base_wait_time)
+            print(f'Variation is {random_variation}')
+            wait_time = base_wait_time + random_variation
+            print(f'Wait time is {wait_time}')
+            time.sleep(wait_time)
 
-            # Add a delay after clicking
-            time.sleep(20)  # Adjust this delay as needed
+        # Add a delay between rocks (adjust as needed)
+        time.sleep(1)
 
-        # Wait for 30 seconds before running the loop again
-        time.sleep(1)  # Adjust 
-        
+
+
 def vr_silver(coordinates_list):
     # Delay before starting
     time.sleep(5)
@@ -90,7 +103,7 @@ def fl_smelt():
         time.sleep(12)  
 # Call the AKsilver function
 # vr_silver(coordinates_list)
-bv_coal()
+# bv_coal()
 # main()
 
-# fl_smelt()
+fl_smelt()

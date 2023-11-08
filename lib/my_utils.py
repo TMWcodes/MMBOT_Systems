@@ -13,5 +13,5 @@ def capture_coords(count, wait):
         time.sleep(wait)
     return captured_positions
 
-capture_coords(4, 20)
+capture_coords(4, 5)
     # => [ { x: 1329, y: 541 }, { x: 1386, y: 603 }, { x: 1420, y: 690 } ]
