@@ -98,10 +98,8 @@ def fl_furnace(item):
     position = bank_coords[item]
     turn_counter = 0
     while True:
-        base_wait_time = 10
-        
- 
-        
+        base_wait_time = 13
+
         route_a = [position, {'x': 1853, 'y': 81}, {'x': 1872, 'y': 79}, {'x': 1883, 'y': 124}, {'x': 1848, 'y': 140}, {'x': 1737, 'y': 574}] #worked from B1
         route_a2 = [position, {'x': 1879, 'y': 64}, {'x': 1897, 'y': 124}, {'x': 1849, 'y': 133}, {'x': 1740, 'y': 520}] #worked from B1
       
@@ -113,12 +111,11 @@ def fl_furnace(item):
     
         print(f'turn counter {turn_counter}')
         print('heading to furnace')
-        
-        
+        time.sleep(1)
+        print('heading to furnace')
+        selected_route = 'route_a2' if turn_counter % switch_every_x_turns == 0 else 'route_a'
+        print(f'Choosing {selected_route}')
         for point in (route_a2 if turn_counter % switch_every_x_turns == 0 else route_a):
-            selected_route = 'route_a2' if turn_counter % switch_every_x_turns == 0 else 'route_a'
-            print(f'Choosing {selected_route}')
-            print('heading to furnace')
             x, y = point['x'], point['y']
             print(f'moving mouse to {x},{y}')
             pyautogui.moveTo(x, y, duration=1, tween=pyautogui.easeInQuad)  # Move to the position
@@ -126,7 +123,7 @@ def fl_furnace(item):
             pyautogui.click()  # Click the mouse
             random_variation = random.uniform(-0.2 * base_wait_time, 0.2 * base_wait_time)
             wait_time = base_wait_time + random_variation
-            print(f'Wait time is {wait_time}')
+            # print(f'Wait time is {wait_time}')
             time.sleep(wait_time)
             
         print('pressing space')
@@ -135,8 +132,10 @@ def fl_furnace(item):
         ## smelting
         print('smelting break')
         if (item == "silver bar"): 
+            print("sleeping 60")
             time.sleep(60)
         else:
+            print("sleeping 90")
             time.sleep(90)
 
         # return
@@ -156,12 +155,13 @@ def fl_furnace(item):
             pyautogui.click()
             random_variation = random.uniform(-0.2 * base_wait_time, 0.2 * base_wait_time)  # Click the 
             wait_time = base_wait_time + random_variation
-            print(f'Wait time is {wait_time}')
+            # print(f'Wait time is {wait_time}')
             time.sleep(wait_time) 
 
         turn_counter += 1
         print(turn_counter)
         print('banking inventory')
+        time.sleep(2)
         # pyautogui.click(1513, 827) # all
         pyautogui.click(1793, 761) # second inv pos.
 
@@ -172,4 +172,4 @@ def fl_furnace(item):
 # bv_coal()
     # main()
 
-fl_furnace('silver ore')
+# fl_furnace('silver ore')

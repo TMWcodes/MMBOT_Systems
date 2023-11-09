@@ -13,7 +13,7 @@ def capture_num_coords(count, wait):
         time.sleep(wait)
     return captured_positions
 
-capture_num_coords(8, 12)
+capture_num_coords(8, 10)
 
 def const_record_coords(seconds=60):
     for i in range(0,seconds):
