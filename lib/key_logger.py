@@ -8,6 +8,10 @@ mouse_listener = None
 # declare our start_time globally so that the call back functions can reference it.
 start_time = None
 
+unreleased_keys = []
+
+
+
 def main():
     runListeners()
 
@@ -16,6 +20,12 @@ def elapsed_time():
     return time() - start_time
 
 def on_press(key):
+    # we only want to record the first key pressed until released.
+    global unreleased_keys
+    if key in unreleased_keys:
+        return
+    else:
+        unreleased_keys.append(key)
     try:
         print('{0} pressed at {1}'.format(
             key.char, elapsed_time()))
@@ -24,6 +34,14 @@ def on_press(key):
             key, elapsed_time()))
         
 def on_release(key):
+    # mark key as no longer pressed
+    global unreleased_keys
+    try:
+        unreleased_keys.remove(key)
+    except ValueError:
+        print('ERROR: {} not in unreleased_keys'.format(key))
+
+
     print('{0} released'.format(key, elapsed_time()))
     
     if key == keyboard.Key.esc:
