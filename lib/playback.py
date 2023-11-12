@@ -49,8 +49,12 @@ def playActions(filename):
                 pyautogui.keyUp(key)
                 print("keyUp on {}". format(action['button']))
             elif action['type'] == 'click':
-                pyautogui.click(action['pos'][0],action['pos'][1], duration=0.25)
-                print("click on {}". format(action['pos']))
+                if action['button'] == 'Button.left':
+                    pyautogui.click(action['pos'][0], action['pos'][1], button='left', duration=0.25)
+                    print(f"left click on {action['pos']}")
+                elif action['button'] == 'Button.right':
+                    pyautogui.click(action['pos'][0], action['pos'][1], button='right', duration=0.25)
+                    print(f"right click on {action['pos']}")
 
             # sleep until next action
             try:
