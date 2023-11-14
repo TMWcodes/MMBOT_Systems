@@ -169,7 +169,7 @@ def fl_furnace(item):
 
     # Call functions
     # vr_silver(coordinates_list)
-# bv_coal()
+bv_coal()
     # main()
 
 # fl_furnace('silver ore')

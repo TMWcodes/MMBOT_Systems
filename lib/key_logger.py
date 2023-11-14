@@ -4,7 +4,7 @@ import json
 import os
 #pynput             1.7.6
 
-OUTPUT_FILENAME = 'actions_test_01'
+OUTPUT_FILENAME = 'smith_01'
 
 
 # Declare mouse listener globally, so that keyboard on_release can stop it

@@ -2,11 +2,14 @@ import pyautogui
 from time import sleep, time
 import os #import
 import json #parse
-def main():
-    # initialize
-   initialize_pyautogui()
-   count_down_timer()
-   playActions("actions_test_01.json")
+# def main():
+#     # initialize
+#    initialize_pyautogui()
+ 
+#    count_down_timer()
+#    for i in range(0, 10):
+#         playActions("smith_01.json")
+#         print(i)
     # change camera to birds eye view 
    
 
@@ -50,12 +53,15 @@ def playActions(filename):
                 print("keyUp on {}". format(action['button']))
             elif action['type'] == 'click':
                 if action['button'] == 'Button.left':
-                    pyautogui.click(action['pos'][0], action['pos'][1], button='left', duration=0.25)
+                    pyautogui.moveTo(action['pos'][0], action['pos'][1], duration=1, tween=pyautogui.easeInQuad)
+                    sleep(1)
+                    pyautogui.click('left', duration=0.25)
                     print(f"left click on {action['pos']}")
                 elif action['button'] == 'Button.right':
-                    pyautogui.click(action['pos'][0], action['pos'][1], button='right', duration=0.25)
+                    pyautogui.moveTo(action['pos'][0], action['pos'][1], duration=1, tween=pyautogui.easeInQuad)
+                    sleep(1)
+                    pyautogui.click('right', duration=0.25)
                     print(f"right click on {action['pos']}")
-
             # sleep until next action
             try:
                 next_action = data[index + 1]
@@ -101,5 +107,5 @@ def convertKey(button):
 
     return cleaned_key
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
