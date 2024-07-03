@@ -2,6 +2,25 @@ import pyautogui
 import time
 import random
 
+DELAY_BETWEEN_COMMANDS = 1.0
+def holdKey(key, second =10):
+    pyautogui.keyDown(key)
+    time.sleep(second)
+    pyautogui.keyUp(key)
+    time.sleep(DELAY_BETWEEN_COMMANDS) 
+    print("Done")
+
+def initialize_pyautogui():
+     pyautogui.FAILSAFE = True
+
+def count_down_timer():
+        # ten second count down
+    print("starting", end="", flush=True)
+    for i in range(0, 5):
+        print(".", end="", flush=True)
+        time.sleep(1)
+    print("Go")
+
 def capture_num_coords(count, wait):
     captured_positions = []
     print(f'waiting three second, then counting {count} positions, with a {wait} second interval')
@@ -15,7 +34,7 @@ def capture_num_coords(count, wait):
     return captured_positions
 
 def const_record_coords(seconds=20):
-    print(f"capturing coordinates for {seconds} seconds")
+    print(f"capturing coordinates every 3 seconds for {seconds} seconds, after 2 seconds")
     time.sleep(2)
     for i in range(0,seconds):
         print(pyautogui.position())
@@ -27,42 +46,32 @@ def vary_coordinates(x, y, variation):
     return x_variation, y_variation
 
 # checks colour, checks against expected colour, checks methods against eachother
-def check_color(coordinates=(1741,95), expected_color=(33, 37, 43)):
+def check_color(coordinates=(1741,95)):
     # method 1
     im = pyautogui.screenshot()
     pixel_color = im.getpixel((coordinates))
-    # method 2
+    # method 2 (redundancy)
     pixel = pyautogui.pixel(*coordinates)
     
     # method match
     if pixel_color == pixel:
         pass
     else:
-        print("too different pixel readings")
+        print("two different pixel readings")
 
     # color match
+    
+    return pixel
+
+def compare_colors(coordinates=(1741,95), expected_color=(33, 37, 43)):
     match = pyautogui.pixelMatchesColor(coordinates[0],coordinates[1], (expected_color))
     # print(result1)
     # print(result3)
     if match == False:
-        print("does not match expected colour")
+        print("does not match expected color")
     else:
-        print("colour match"
+        print("color matches expected value."
         )
-    return pixel
 
-    # => [ { x: 1329, y: 541 }, { x: 1386, y: 603 }, { x: 1420, y: 690 } ]
-
-
-# data = capture_num_coords(1, 5)
-# x_value = data[0]['x']
-# print(f"x value: {x_value}")
-
-# # Accessing and printing the 'y' value
-# y_value = data[0]['y']
-# print(f"y value: {y_value}")
-# color = check_color((x_value, y_value))
-# print(color)
-#1741, 95 should be 176, 8 ,4 if not eat (click inventory slot 1), check color, repeat.
-# empty health is 19,19,19
-# special - 1771, 188 should be 53, 155, 181.
+print(f"color = {check_color()}")
+ 

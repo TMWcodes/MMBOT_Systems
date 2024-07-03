@@ -1,0 +1,74 @@
+[
+    {
+        "time": 2.8467135429382324,
+        "type": "move",
+        "button": "None",
+        "pos": [
+            109,
+            261
+        ]
+    },
+    {
+        "time": 4.606794357299805,
+        "type": "click",
+        "button": "Button.left",
+        "pos": [
+            974,
+            709
+        ]
+    },
+    {
+        "time": 5.270844221115112,
+        "type": "move",
+        "button": "None",
+        "pos": [
+            974,
+            709
+        ]
+    },
+    {
+        "time": 7.271268129348755,
+        "type": "move",
+        "button": "None",
+        "pos": [
+            979,
+            563
+        ]
+    },
+    {
+        "time": 7.942646741867065,
+        "type": "click",
+        "button": "Button.left",
+        "pos": [
+            981,
+            701
+        ]
+    },
+    {
+        "time": 9.471049785614014,
+        "type": "move",
+        "button": "None",
+        "pos": [
+            166,
+            687
+        ]
+    },
+    {
+        "time": 11.02334713935852,
+        "type": "click",
+        "button": "Button.left",
+        "pos": [
+            976,
+            687
+        ]
+    },
+    {
+        "time": 11.479115724563599,
+        "type": "move",
+        "button": "None",
+        "pos": [
+            987,
+            675
+        ]
+    }
+]

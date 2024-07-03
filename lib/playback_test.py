@@ -2,8 +2,10 @@ import pyautogui
 from time import sleep, time
 import os #import
 import json #parse
-from my_utils import check_color, count_down_timer, initialize_pyautogui
+from my_utils import check_color
 from mouse_movement_1 import move_mouse_with_easing, generate_spline_path, create_bezier_path
+   
+
 
 
 def playActions(filename, path_type='spline'):
@@ -36,17 +38,19 @@ def playActions(filename, path_type='spline'):
             elif action['type'] == 'move' or action['type'] == 'click':
                 current_pos = pyautogui.position()
                 target_pos = (action['pos'][0], action['pos'][1])
-                
                 if path_type == 'spline':
                     points = generate_spline_path(current_pos, target_pos)
                     print(f"moving to {target_pos}")
+                    pyautogui.mouseDown() 
                     move_mouse_with_easing(zip(*(i.astype(int) for i in points)), duration=0.1, easing_function=pyautogui.easeInOutQuad)
+                    pyautogui.mouseUp()
                 elif path_type == 'bezier':
                     path = create_bezier_path(current_pos, target_pos)
                     print(f"moving to {target_pos}")
+                    pyautogui.mouseDown() 
                     for point in path:
                         pyautogui.moveTo(point[0], point[1], duration=0.1, tween=pyautogui.easeInQuad)
-                
+                    pyautogui.mouseUp()
                 
                 if action['type'] == 'click':
                     pyautogui.click(target_pos[0], target_pos[1], button='left' if action['button'] == 'Button.left' else 'right', duration=0.25)

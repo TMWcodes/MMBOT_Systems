@@ -1,8 +1,9 @@
 import pyautogui
 import time
 import random
+from my_utils import holdKey
 
-DELAY_BETWEEN_COMMANDS = 1.0
+
 def main():
     # initialize
    initialize_pyautogui()
@@ -23,13 +24,8 @@ def count_down_timer():
         time.sleep(1)
     print("Go")
 
-def holdKey(key, second =10):
-    pyautogui.keyDown(key)
-    time.sleep(second)
-    pyautogui.keyUp(key)
-    time.sleep(DELAY_BETWEEN_COMMANDS) 
-    print("Done")
-# main()
+
+
 def bv_coal():
     coal_coords = {
         'rock1': [{'x': 1432, 'y': 591}, {'x': 1403, 'y': 615}, {'x': 1451, 'y': 636}],
@@ -61,7 +57,6 @@ def bv_coal():
 
         # Add a delay between rocks (adjust as needed)
         time.sleep(1)
-
 
 
 def vr_silver(coordinates_list):
@@ -165,11 +160,5 @@ def fl_furnace(item):
         # pyautogui.click(1513, 827) # all
         pyautogui.click(1793, 761) # second inv pos.
 
-        
 
-    # Call functions
-    # vr_silver(coordinates_list)
-bv_coal()
-    # main()
 
-# fl_furnace('silver ore')
