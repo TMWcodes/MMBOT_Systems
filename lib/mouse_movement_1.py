@@ -1,5 +1,3 @@
-
-
 import pyautogui
 import random
 import numpy as np
@@ -13,9 +11,15 @@ pyautogui.MINIMUM_DURATION = 0.1
 pyautogui.MINIMUM_SLEEP = 0.05
 pyautogui.PAUSE = 0.1
 
+# Function to move the mouse cursor with easing effect between given points
+def move_mouse_with_easing(points, duration, easing_function):
+    for point in points:
+        pyautogui.moveTo(point[0], point[1], duration, easing_function)
+        time.sleep(0.05)  # Adjust sleep time if needed for smoother movement
+
+
+
 # Function to generate random control points for mouse movement
-
-
 def generate_control_points(start_position, end_position):
     # Randomly select the number of control points (between 3 and 5)
     cp = random.randint(3, 5)
@@ -38,18 +42,7 @@ def generate_control_points(start_position, end_position):
 
     return x, y
 
-# Function to move the mouse cursor with easing effect between given points
-def move_mouse_with_easing(points, duration, easing_function):
-    # Simulate mouse button press
-    # pyautogui.mouseDown()
-    # Move the mouse cursor to each point with specified duration and easing function
-    for point in points:
-        pyautogui.moveTo(point[0], point[1], duration, easing_function)
-        time.sleep(0.05)  # Adjust sleep time if needed for smoother movement
-    # Release the mouse button
-    # pyautogui.mouseUp()
-
-
+#
 def generate_spline_path(start_position, end_position):
   
     # Generate control points for mouse movement
