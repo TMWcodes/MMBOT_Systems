@@ -48,6 +48,15 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.05)
                     x_var, y_var = vary_coordinates(target_pos[0], target_pos[1], variation)
                     target_pos = (target_pos[0] + x_var, target_pos[1] + y_var)
 
+                print(f"Target position before check: {target_pos}")
+                if not isinstance(target_pos, (tuple, list)) or len(target_pos) != 2:
+                    raise ValueError("target_pos must be a tuple or list of two integers")
+                
+                x, y = target_pos
+                if not isinstance(x, int) or not isinstance(y, int):
+                    raise ValueError("Both elements of target_pos must be integers")
+
+
                 if path_type == 'spline':
                     points = generate_spline_path(current_pos, target_pos)
                     print(f"moving to {target_pos}")

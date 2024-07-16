@@ -41,37 +41,36 @@ def const_record_coords(seconds=20):
         time.sleep(3)
     
 def vary_coordinates(x, y, variation):
-    x_variation = random.uniform(-variation * x, variation * x)
-    y_variation = random.uniform(-variation * y, variation * y)
+    x_variation = int(random.uniform(-variation, variation) * x)
+    y_variation = int(random.uniform(-variation, variation) * y)
     return x_variation, y_variation
 
 # checks colour, checks against expected colour, checks methods against eachother
 def check_color(coordinates=(1741,95)):
-    # method 1
-    im = pyautogui.screenshot()
-    pixel_color = im.getpixel((coordinates))
-    # method 2 (redundancy)
-    pixel = pyautogui.pixel(*coordinates)
+    if not isinstance(coordinates, (tuple, list)) or len(coordinates) != 2:
+        raise ValueError("Coordinates must be a tuple or list of two integers")
     
-    # method match
-    if pixel_color == pixel:
-        pass
-    else:
-        print("two different pixel readings")
+    x, y = coordinates
+    if not isinstance(x, int) or not isinstance(y, int):
+        raise ValueError("Both coordinates must be integers")
 
-    # color match
+    im = pyautogui.screenshot()
+    pixel_color = im.getpixel((x, y))
+
+    pixel = pyautogui.pixel(x, y)
+
+    if pixel_color != pixel:
+        print("Two different pixel readings:", pixel_color, pixel)
+    else:
+        print("Pixel readings match:", pixel)
     
     return pixel
 
 def compare_colors(coordinates=(1741,95), expected_color=(33, 37, 43)):
     match = pyautogui.pixelMatchesColor(coordinates[0],coordinates[1], (expected_color))
-    # print(result1)
-    # print(result3)
     if match == False:
         print("does not match expected color")
     else:
         print("color matches expected value."
         )
-
-print(f"color = {check_color()}")
  

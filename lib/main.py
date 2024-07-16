@@ -1,30 +1,23 @@
 import pyautogui
-import time
+from time import time, sleep
 import random
-from my_utils import holdKey
+from my_utils import holdKey,initialize_pyautogui, count_down_timer, check_color
+import os
+import json
+
+log_data=[]
+# color = check_color()
+start_time = time() 
 
 
-def main():
-    # initialize
-   initialize_pyautogui()
-   count_down_timer()
-   holdKey('up', 2)
-    # change camera to birds eye view 
-   
-
-def initialize_pyautogui():
-     pyautogui.FAILSAFE = True
-
-def count_down_timer():
-        # ten second count down
-    print("starting", end="", flush=True)
-    for i in range(0, 10):
-        print(".", end="", flush=True)
-  
-        time.sleep(1)
-    print("Go")
-
-
+def log_clicks(log_data, coordinates, color, elapsed_time):
+    log_data.append({
+        'time': elapsed_time,
+        'type': 'click',
+        'button': 'Button.left' if pyautogui.position() == coordinates else 'Button.right',
+        'pos': coordinates,
+        'color': color
+    })
 
 def bv_coal():
     coal_coords = {
@@ -33,8 +26,9 @@ def bv_coal():
         'rock3': [{'x': 1422, 'y': 682}, {'x': 1473, 'y': 699}, {'x': 1434, 'y': 719}],
         'rock4': [{'x': 1221, 'y': 376}, {'x': 1232, 'y': 399}, {'x': 1219, 'y': 419}]
     }
-    time.sleep(5)
-    while True:
+   
+    sleep(5)
+    for i in range(0, 1):
         for rock, coords in coal_coords.items():
             print(f"Performing tasks for {rock}")
 
@@ -45,18 +39,21 @@ def bv_coal():
             y += random.randint(-5, 5)
             print(f'Moving rand mouse to {x},{y}')
             pyautogui.moveTo(x, y, duration=1, tween=pyautogui.easeInQuad)
-            time.sleep(1)
+            sleep(1)
             pyautogui.click()
-
+            target_pos = (x,y)     
+            color = check_color(target_pos)
+            elapsed_time = time() - start_time 
+            log_clicks(log_data, target_pos, color, elapsed_time)
             base_wait_time = 14
             random_variation = random.uniform(-0.3 * base_wait_time, 0.3 * base_wait_time)
             print(f'Variation is {random_variation}')
             wait_time = base_wait_time + random_variation
             print(f'Wait time is {wait_time}')
-            time.sleep(wait_time)
-
+            sleep(wait_time)
+            
         # Add a delay between rocks (adjust as needed)
-        time.sleep(1)
+        sleep(1)
 
 
 def vr_silver(coordinates_list):
@@ -161,4 +158,34 @@ def fl_furnace(item):
         pyautogui.click(1793, 761) # second inv pos.
 
 
+def main(function=bv_coal):
+    function = input("Enter function name: ")
+    # initialize
+    initialize_pyautogui()
+    count_down_timer()
+    holdKey('up', 2)
+    
+   
+    function()
+    script_name = function.__name__
+    # script_name = os.path.basename(__file__).split('.')[0]  # Automatically get the script name without extension
+    script_dir = os.path.dirname(__file__)
+    log_dir = os.path.join(script_dir, 'log_records')
+    os.makedirs(log_dir, exist_ok=True)  # Create the log_records directory if it doesn't exist
 
+    base_filename, _ = os.path.splitext(script_name)
+    log_file_path = os.path.join(log_dir, f'{base_filename}_log.json')
+    # If the log file already exists, find a new filename
+    if os.path.exists(log_file_path):
+        i = 1
+        new_log_file_path = log_file_path
+        while os.path.exists(new_log_file_path):
+            new_log_file_path = os.path.join(log_dir, f'{base_filename}_log_{i}.json')
+            i += 1
+        log_file_path = new_log_file_path
+
+    with open(log_file_path, 'w') as log_file:
+        json.dump(log_data, log_file, indent=4)
+    # change camera to birds eye view 
+if __name__ == "__main__":
+    main()

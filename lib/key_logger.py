@@ -4,7 +4,7 @@ import json
 import os
 from my_utils import check_color
 
-OUTPUT_FILENAME = 'color_coord_test_01'
+OUTPUT_FILENAME = 'color_coord_test_pt2_01'
 
 mouse_listener = None
 start_time = None
