@@ -39,6 +39,64 @@ def load_coordinates(events, ignore_moves=False):
             coordinates.append(pos)
     return np.array(coordinates)
 
+def load_coordinates_from_dicts(coordinates_list):
+    coordinates = [[coord['x'], coord['y']] for coord in coordinates_list]
+    return np.array(coordinates)
+
+def combine_json(file1_name, file2_name, output_file_name='combined_file.json'):
+    script_dir = os.path.dirname(__file__)
+    rec_dir = os.path.join(script_dir, 'recordings')
+
+    file1 = os.path.join(rec_dir, file1_name)
+    file2 = os.path.join(rec_dir, file2_name)
+    output_file = os.path.join(rec_dir, output_file_name)
+
+    if not os.path.exists(file1):
+        print(f"Error: {file1} not found.")
+        return
+    if not os.path.exists(file2):
+        print(f"Error: {file2} not found.")
+        return
+
+    with open(file1, 'r') as f1:
+        data1 = json.load(f1)
+    with open(file2, 'r') as f2:
+        data2 = json.load(f2)
+
+    combined_data = data1 + data2
+    with open(output_file, 'w') as f_out:
+        json.dump(combined_data, f_out, indent=2)
+    print(f'file1 has {len(data1)} entries, file2 has {len(data2)} entries, combined has {len(combined_data)} entries')
+    print(f"Combined data written to {output_file} successfully!")
+
+def compare_json_files(file1, file2):
+    data1 = load_json(file1)
+    data2 = load_json(file2)
+    
+    if len(data1) != len(data2):
+        print(f"Files have different number of entries: {len(data1)} vs {len(data2)}")
+        return
+
+    differences = []
+    for i, (entry1, entry2) in enumerate(zip(data1, data2)):
+        pos1, color1 = entry1['pos'], entry1['color']
+        pos2, color2 = entry2['pos'], entry2['color']
+        
+        if pos1 != pos2 or color1 != color2:
+            differences.append({
+                'index': i,
+                'file1': {'pos': pos1, 'color': color1},
+                'file2': {'pos': pos2, 'color': color2}
+            })
+
+    if differences:
+        print(f"Differences found in {len(differences)} entries:")
+        for diff in differences:
+            print(f"Index {diff['index']}:")
+            print(f"  File 1 - Pos: {diff['file1']['pos']}, Color: {diff['file1']['color']}")
+            print(f"  File 2 - Pos: {diff['file2']['pos']}, Color: {diff['file2']['color']}")
+    else:
+        print("No differences found")
 # Calculate time differences between consecutive events with an option to ignore move actions
 def calculate_time_differences(events, ignore_moves=False):
     time_diffs = []
@@ -60,22 +118,8 @@ def compute_statistics(time_diffs):
     std_time = np.std(time_diffs)
     
     return min_time, max_time, avg_time, std_time
-   
 
 # Apply K-Means Clustering
-def cluster(coordinates, n_clusters=3):
-    kmeans = KMeans(n_clusters=n_clusters, n_init=10, random_state=42)
-    kmeans.fit(coordinates)
-    labels = kmeans.labels_
-    centroids = kmeans.cluster_centers_
-
-    # Plotting the results
-    plt.scatter(coordinates[:, 0], coordinates[:, 1], c=labels, cmap='viridis')
-    plt.scatter(centroids[:, 0], centroids[:, 1], s=300, c='red')
-    plt.xlabel('X coordinate')
-    plt.ylabel('Y coordinate')
-    plt.title('K-Means Clustering of Coordinates')
-    # plt.show()
 
 def calculate_shannon_entropy(sequence):
     unique, counts = np.unique(sequence, axis=0, return_counts=True)
@@ -124,6 +168,21 @@ def silhouette_scores(coordinates, max_clusters):
     else:
         return None
 
+# Apply K-Means Clustering
+def cluster(coordinates, n_clusters=3):
+    kmeans = KMeans(n_clusters=n_clusters, n_init=10, random_state=42)
+    kmeans.fit(coordinates)
+    labels = kmeans.labels_
+    centroids = kmeans.cluster_centers_
+
+    # Plotting the results
+    plt.scatter(coordinates[:, 0], coordinates[:, 1], c=labels, cmap='viridis')
+    plt.scatter(centroids[:, 0], centroids[:, 1], s=300, c='red')
+    plt.xlabel('X coordinate')
+    plt.ylabel('Y coordinate')
+    plt.title('K-Means Clustering of Coordinates')
+    # plt.show()
+
 def detect_repetition(coordinates, threshold):
     coordinate_tuples = tuple(map(tuple, coordinates))
     coordinate_counts = Counter(coordinate_tuples)
@@ -149,11 +208,30 @@ def compute_time_stats(filename, ignore_moves="yes"):
     # else:
     #     print("Likely human behavior.")
 # Convert coordinates list to NumPy array
-def load_coordinates_from_dicts(coordinates_list):
-    coordinates = [[coord['x'], coord['y']] for coord in coordinates_list]
-    return np.array(coordinates)
 
+def divide_coordinates(coords, num_groups, output_file_name):
+    script_dir = os.path.dirname(__file__)
+    log_dir = os.path.join(script_dir, 'data_points')
+    output_file = os.path.join(log_dir, output_file_name)
+    os.makedirs(log_dir, exist_ok=True)
 
+    structured_coords = {}
+    coords_per_group = len(coords) // num_groups
+    remainder = len(coords) % num_groups
+
+    start = 0
+    for i in range(num_groups):
+        end = start + coords_per_group + (1 if i < remainder else 0)
+        group_name = f'rock{i+1}'
+        structured_coords[group_name] = [{'x': int(coord[0]), 'y': int(coord[1])} for coord in coords[start:end]]
+        start = end
+    
+    with open(output_file, 'w') as f_out:
+        json.dump(structured_coords, f_out, indent=2)
+    print(f"Divided coordinates saved to {output_file}")
+
+    return structured_coords
+ 
 def opt_clusters(coordinates):
      # # Calculate the number of unique points in the coordinates
     unique_points = len(np.unique(coordinates, axis=0))
@@ -214,56 +292,33 @@ def plot_autocorrelation(sequence, repetitions, figsize=(12, 6), max_lag=50):
     plt.xlabel('Lag')
     plt.ylabel('Autocorrelation')
     plt.title(f'Multidimensional Autocorrelation of Coordinate Pairs (Repeated {repetitions} times)')
-    plt.show()
+    # plt.show()
     
     print(f"Autocorrelation metric for {repetitions} repetitions: {autocorr_metric}")
 
     return autocorr_metric
 
-def compare_json_files(file1, file2):
-    data1 = load_json(file1)
-    data2 = load_json(file2)
-    
-    if len(data1) != len(data2):
-        print(f"Files have different number of entries: {len(data1)} vs {len(data2)}")
-        return
 
-    differences = []
-    for i, (entry1, entry2) in enumerate(zip(data1, data2)):
-        pos1, color1 = entry1['pos'], entry1['color']
-        pos2, color2 = entry2['pos'], entry2['color']
-        
-        if pos1 != pos2 or color1 != color2:
-            differences.append({
-                'index': i,
-                'file1': {'pos': pos1, 'color': color1},
-                'file2': {'pos': pos2, 'color': color2}
-            })
-
-    if differences:
-        print(f"Differences found in {len(differences)} entries:")
-        for diff in differences:
-            print(f"Index {diff['index']}:")
-            print(f"  File 1 - Pos: {diff['file1']['pos']}, Color: {diff['file1']['color']}")
-            print(f"  File 2 - Pos: {diff['file2']['pos']}, Color: {diff['file2']['color']}")
-    else:
-        print("No differences found")
 
 # Replace with the actual file paths
 
-
 def main():
-    filename = input("Enter filename: ")
-    ignore_moves = input("Ignore move actions? (yes/no): ").strip().lower() == 'yes'
-    print("from json") 
+
+    filename = 'combined_file.json'
+    ignore_moves = 'yes'
+#     filename = input("Enter file name: ")
+#     ignore_moves = input("Ignore move actions? (yes/no): ").strip().lower() == 'yes'
+#     print("from json") 
     compute_time_stats(filename)
     events = load_json(filename)
-    
     coordinates = load_coordinates(events, ignore_moves)
+
+
     
+    rock_coords = divide_coordinates(coordinates, 5, '')
 
-
-#     print("from dict")
+    
+#     print("from dictionary")
 #     coordinates_list = [
 #     {'x': 1435, 'y': 758},
 #     {'x': 1376, 'y': 696},
@@ -280,16 +335,16 @@ def main():
     
     num_repeats = 10
     threshold = 0.3
-    # repeated_sequences = [np.tile(coordinates, (i, 1)) for i in range(1, num_repeats + 1)]
+    repeated_sequences = [np.tile(coordinates, (i, 1)) for i in range(1, num_repeats + 1)]
     # print(repeated_sequences)
 
     for i in range(1, num_repeats + 1):
         repeated_sequence = np.tile(coordinates, (i, 1))
 
-    # # print(repeated_sequence)
-    # # #     #  # # Perform clustering with the optimal number of clusters
-    # final_clusters = opt_clusters(repeated_sequence)
-    # cluster(repeated_sequence, n_clusters=final_clusters)
+
+    # #     #  # # Perform clustering with the optimal number of clusters
+    final_clusters = opt_clusters(repeated_sequence)
+    cluster(repeated_sequence, n_clusters=final_clusters)
     shannon_entropy = calculate_shannon_entropy(repeated_sequence)
     repeated_coords = detect_repetition(repeated_sequence, threshold)
    
@@ -302,10 +357,22 @@ def main():
     for num_repeats in [1, num_repeats, 100]:
         autocorr_metric = plot_autocorrelation(coordinates, num_repeats)
 
-file_in = input()
-file1 = r'C:\Users\Tyrone\Documents\Programming\coding\MMBOT_systems\lib\log_records\color_coord_test_01_log.json'
-file2 = r'C:\Users\Tyrone\Documents\Programming\coding\MMBOT_systems\lib\log_records\file_in'
+# file_in = input("enter second file to compare: ")
+    file1 = ''
+    file2 = ''
 
-compare_json_files(file1, file2)
+    
+    try:
+        compare_json_files(file1, file2)
+    except FileNotFoundError as e:
+        print(e)
+
+   
+
+    file_1 = ''
+    file_2 = ''
+
+# Combine the JSON files
+    # combine_json(file_1, file_2)
 if __name__ == "__main__":
     main()
