@@ -6,7 +6,7 @@ import json
 import os
 from scipy.stats import entropy
 from collections import Counter
-
+import pandas as pd
 
 # Load JSON data from a file
 def load_json(filename):
@@ -14,16 +14,14 @@ def load_json(filename):
     
     # Check in 'recordings' directory
     recordings_path = os.path.join(script_dir, 'recordings', filename)
-    # print(f"Checking for file in: {recordings_path}")  # Debug print
     if os.path.exists(recordings_path):
-        with open(recordings_path, 'r') as file:
+        with open(recordings_path, 'r', encoding='utf-8') as file:
             return json.load(file)
     
     # Check in 'log_records' directory
     log_records_path = os.path.join(script_dir, 'log_records', filename)
-    # print(f"Checking for file in: {log_records_path}")  # Debug print
     if os.path.exists(log_records_path):
-        with open(log_records_path, 'r') as file:
+        with open(log_records_path, 'r', encoding='utf-8') as file:
             return json.load(file)
     
     # If file is not found in both directories
@@ -298,81 +296,156 @@ def plot_autocorrelation(sequence, repetitions, figsize=(12, 6), max_lag=50):
 
     return autocorr_metric
 
+def flatten_json(y):
+    out = {}
+
+    def flatten(x, name=''):
+        if isinstance(x, dict):
+            for a in x:
+                flatten(x[a], name + a + '_')
+        elif isinstance(x, list):
+            out[name[:-1]] = json.dumps(x)  # Store list as JSON string
+        else:
+            out[name[:-1]] = x
+
+    flatten(y)
+    return out
+
+def unflatten_json(flat):
+    out = {}
+    for k, v in flat.items():
+        keys = k.split('_')
+        d = out
+        for key in keys[:-1]:
+            if key.isdigit():
+                key = int(key)
+            if key not in d:
+                d[key] = {}
+            d = d[key]
+        try:
+            v = json.loads(v)  # Convert JSON string back to list
+        except (ValueError, TypeError):
+            pass
+        d[keys[-1]] = v
+    return out
 
 
-# Replace with the actual file paths
+def json_to_csv(json_filename, csv_filename):
+    try:
+        data = load_json(json_filename)
+        flattened_data = [flatten_json(item) for item in data]
+
+        df = pd.DataFrame(flattened_data)
+        
+        csv_dir = os.path.dirname(csv_filename)
+        if not os.path.exists(csv_dir):
+            os.makedirs(csv_dir)
+
+        df.to_csv(csv_filename, encoding='utf-8', index=False)
+        
+        print(f"Successfully converted '{json_filename}' to '{csv_filename}'.")
+
+    except FileNotFoundError as fnf_error:
+        print(fnf_error)
+    except ValueError as ve:
+        print(f"Value error: {ve}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+# CSV to JSON Function
+def csv_to_json(csv_filename, json_filename):
+    try:
+        df = pd.read_csv(csv_filename, encoding='utf-8')
+        data = df.to_dict(orient='records')
+        unflattened_data = [unflatten_json(item) for item in data]
+
+        json_dir = os.path.dirname(json_filename)
+        if not os.path.exists(json_dir):
+            os.makedirs(json_dir)
+
+        with open(json_filename, 'w', encoding='utf-8') as json_file:
+            json.dump(unflattened_data, json_file, indent=4)
+        
+        print(f"Successfully converted '{csv_filename}' to '{json_filename}'.")
+
+    except FileNotFoundError as fnf_error:
+        print(fnf_error)
+    except ValueError as ve:
+        print(f"Value error: {ve}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 def main():
-
-    filename = 'combined_file.json'
-    ignore_moves = 'yes'
-#     filename = input("Enter file name: ")
-#     ignore_moves = input("Ignore move actions? (yes/no): ").strip().lower() == 'yes'
-#     print("from json") 
-    compute_time_stats(filename)
-    events = load_json(filename)
-    coordinates = load_coordinates(events, ignore_moves)
+       
+# Example usage
+    # json_to_csv('color_coord_test_01_log_1.json', 'csv_data/output.csv')
+    # csv_to_json('csv_data/output.csv', 'log_records/output.json')
+#     filename = 'combined_file.json'
+#     ignore_moves = 'yes'
+# #     filename = input("Enter file name: ")
+# #     ignore_moves = input("Ignore move actions? (yes/no): ").strip().lower() == 'yes'
+# #     print("from json") 
+#     compute_time_stats(filename)
+#     events = load_json(filename)
+#     coordinates = load_coordinates(events, ignore_moves)
 
 
     
-    rock_coords = divide_coordinates(coordinates, 5, '')
+#     rock_coords = divide_coordinates(coordinates, 5, '')
 
     
-#     print("from dictionary")
-#     coordinates_list = [
-#     {'x': 1435, 'y': 758},
-#     {'x': 1376, 'y': 696},
-#     {'x': 1475, 'y': 302},
-#     {'x': 1435, 'y': 758},  # Repeated coordinate
-#     {'x': 1376, 'y': 696},  # Repeated coordinate
-#     {'x': 1435, 'y': 758},  # Repeated coordinate
-# ]
-#     coordinates = load_coordinates_from_dicts(coordinates_list)
+# #     print("from dictionary")
+# #     coordinates_list = [
+# #     {'x': 1435, 'y': 758},
+# #     {'x': 1376, 'y': 696},
+# #     {'x': 1475, 'y': 302},
+# #     {'x': 1435, 'y': 758},  # Repeated coordinate
+# #     {'x': 1376, 'y': 696},  # Repeated coordinate
+# #     {'x': 1435, 'y': 758},  # Repeated coordinate
+# # ]
+# #     coordinates = load_coordinates_from_dicts(coordinates_list)
    
-    # # # Perform clustering with the optimal number of clusters
-    final_clusters = opt_clusters(coordinates)
-    cluster(coordinates, n_clusters=final_clusters)
+#     # Perform clustering with the optimal number of clusters
+#     final_clusters = opt_clusters(coordinates)
+#     cluster(coordinates, n_clusters=final_clusters)
     
-    num_repeats = 10
-    threshold = 0.3
-    repeated_sequences = [np.tile(coordinates, (i, 1)) for i in range(1, num_repeats + 1)]
-    # print(repeated_sequences)
+#     num_repeats = 10
+#     threshold = 0.3
+#     repeated_sequences = [np.tile(coordinates, (i, 1)) for i in range(1, num_repeats + 1)]
+#     # print(repeated_sequences)
 
-    for i in range(1, num_repeats + 1):
-        repeated_sequence = np.tile(coordinates, (i, 1))
+#     for i in range(1, num_repeats + 1):
+#         repeated_sequence = np.tile(coordinates, (i, 1))
 
 
-    # #     #  # # Perform clustering with the optimal number of clusters
-    final_clusters = opt_clusters(repeated_sequence)
-    cluster(repeated_sequence, n_clusters=final_clusters)
-    shannon_entropy = calculate_shannon_entropy(repeated_sequence)
-    repeated_coords = detect_repetition(repeated_sequence, threshold)
+#     # #     #  # # Perform clustering with the optimal number of clusters
+#     final_clusters = opt_clusters(repeated_sequence)
+#     cluster(repeated_sequence, n_clusters=final_clusters)
+#     shannon_entropy = calculate_shannon_entropy(repeated_sequence)
+#     repeated_coords = detect_repetition(repeated_sequence, threshold)
    
-    print(f"Sequence repeated {i} times - Shannon Entropy: {shannon_entropy:.3f}")
-    print(f"Repeated Coordinates:{repeated_coords}")
-    print(f"there are {len(coordinates)} coordinates")
-    # Call the method with the sequence repeated 100 times
-    # autocorr_metric = plot_autocorrelation(coordinates, num_repeats)
+#     print(f"Sequence repeated {i} times - Shannon Entropy: {shannon_entropy:.3f}")
+#     print(f"Repeated Coordinates:{repeated_coords}")
+#     print(f"there are {len(coordinates)} coordinates")
+#     # Call the method with the sequence repeated 100 times
+#     # autocorr_metric = plot_autocorrelation(coordinates, num_repeats)
 
-    for num_repeats in [1, num_repeats, 100]:
-        autocorr_metric = plot_autocorrelation(coordinates, num_repeats)
+#     for num_repeats in [1, num_repeats, 100]:
+#         autocorr_metric = plot_autocorrelation(coordinates, num_repeats)
 
-# file_in = input("enter second file to compare: ")
-    file1 = ''
-    file2 = ''
-
-    
+# # compare json files
+# # file_in = input("enter second file to compare: ")
+    file1 = 'color_coord_test_01_log_1.json'
+    file2 = 'output.json'
     try:
         compare_json_files(file1, file2)
     except FileNotFoundError as e:
         print(e)
 
-   
+#     file_1 = ''
+#     file_2 = ''
+# # Combine the JSON files
+#     combine_json(file_1, file_2)
 
-    file_1 = ''
-    file_2 = ''
-
-# Combine the JSON files
-    # combine_json(file_1, file_2)
 if __name__ == "__main__":
     main()
