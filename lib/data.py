@@ -6,7 +6,9 @@ import json
 import os
 from scipy.stats import entropy
 from collections import Counter
-import pandas as pd
+import pandas as pd#
+from itertools import islice
+
 
 # Load JSON data from a file
 def load_json(filename):
@@ -180,6 +182,7 @@ def cluster(coordinates, n_clusters=3):
     plt.ylabel('Y coordinate')
     plt.title('K-Means Clustering of Coordinates')
     # plt.show()
+    return kmeans
 
 def detect_repetition(coordinates, threshold):
     coordinate_tuples = tuple(map(tuple, coordinates))
@@ -191,6 +194,31 @@ def detect_repetition(coordinates, threshold):
     repeated_coordinates = [coord for coord, freq in frequencies.items() if freq > threshold]
     
     return repeated_coordinates
+
+def detect_repeated_sequences(coordinates, min_sequence_length=3, min_repetitions=2):
+    def window(seq, n=2):
+        "Returns a sliding window (of width n) over data from the iterable"
+        it = iter(seq)
+        result = tuple(islice(it, n))
+        if len(result) == n:
+            yield result
+        for elem in it:
+            result = result[1:] + (elem,)
+            yield result
+
+    # Convert numpy arrays to tuples for hashing
+    coordinates = [tuple(coord) for coord in coordinates]
+
+    sequences = {}
+    for i in range(len(coordinates) - min_sequence_length + 1):
+        sequence = tuple(coordinates[i:i + min_sequence_length])
+        if sequence in sequences:
+            sequences[sequence].append(i)
+        else:
+            sequences[sequence] = [i]
+
+    repeated_sequences = {seq: indices for seq, indices in sequences.items() if len(indices) >= min_repetitions}
+    return repeated_sequences
 
 def compute_time_stats(filename, ignore_moves="yes"):
     events = load_json(filename)
@@ -380,16 +408,33 @@ def main():
 # Example usage
     # json_to_csv('color_coord_test_01_log_1.json', 'csv_data/output.csv')
     # csv_to_json('csv_data/output.csv', 'log_records/output.json')
-#     filename = 'combined_file.json'
-#     ignore_moves = 'yes'
+    filename = 'combined_file.json'
+    ignore_moves = 'yes'
 # #     filename = input("Enter file name: ")
 # #     ignore_moves = input("Ignore move actions? (yes/no): ").strip().lower() == 'yes'
-# #     print("from json") 
+    print("from json") 
 #     compute_time_stats(filename)
-#     events = load_json(filename)
-#     coordinates = load_coordinates(events, ignore_moves)
-
-
+    # events = load_json(filename)
+    events = [
+    {"time": 0.0, "type": "click", "pos": [1425, 469]},
+    {"time": 1.0, "type": "click", "pos": [1425, 469]},
+    {"time": 2.0, "type": "click", "pos": [1430, 470]},
+    {"time": 3.0, "type": "click", "pos": [1425, 469]},
+    {"time": 4.0, "type": "click", "pos": [1425, 469]},
+    {"time": 5.0, "type": "click", "pos": [1430, 470]},
+    {"time": 6.0, "type": "click", "pos": [1425, 469]},
+    {"time": 7.0, "type": "click", "pos": [1425, 469]},
+    {"time": 8.0, "type": "click", "pos": [1430, 470]},
+    {"time": 9.0, "type": "click", "pos": [1500, 480]},  # Not part of the repeated sequence
+    {"time": 10.0, "type": "click", "pos": [1425, 469]},
+    {"time": 11.0, "type": "click", "pos": [1425, 469]},
+    {"time": 12.0, "type": "click", "pos": [1430, 470]},
+    {"time": 13.0, "type": "click", "pos": [1425, 469]}
+]
+    coordinates = load_coordinates(events, ignore_moves)
+    print(coordinates)
+    repeated_sequences = detect_repeated_sequences(coordinates)
+    print("Repeated Sequences:", repeated_sequences)
     
 #     rock_coords = divide_coordinates(coordinates, 5, '')
 
@@ -409,7 +454,7 @@ def main():
 #     final_clusters = opt_clusters(coordinates)
 #     cluster(coordinates, n_clusters=final_clusters)
     
-#     num_repeats = 10
+#     num_repeats  = 10
 #     threshold = 0.3
 #     repeated_sequences = [np.tile(coordinates, (i, 1)) for i in range(1, num_repeats + 1)]
 #     # print(repeated_sequences)
@@ -435,12 +480,12 @@ def main():
 
 # # compare json files
 # # file_in = input("enter second file to compare: ")
-    file1 = 'color_coord_test_01_log_1.json'
-    file2 = 'output.json'
-    try:
-        compare_json_files(file1, file2)
-    except FileNotFoundError as e:
-        print(e)
+    # file1 = 'color_coord_test_01_log_1.json'
+    # file2 = 'output.json'
+    # try:
+    #     compare_json_files(file1, file2)
+    # except FileNotFoundError as e:
+    #     print(e)
 
 #     file_1 = ''
 #     file_2 = ''
