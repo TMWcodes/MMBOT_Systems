@@ -2,9 +2,9 @@ from pynput import mouse, keyboard
 from time import time, sleep
 import json
 import os
-from my_utils import check_color
+from my_utils import check_color, count_down_timer
 
-OUTPUT_FILENAME = 'color_coord_test_pt2_01'
+OUTPUT_FILENAME = 'tkinter'
 
 mouse_listener = None
 start_time = None
@@ -17,16 +17,6 @@ class EventType():
     CLICK = 'click'
     MOVE = 'move'
 
-def main():
-    print("start in 5")
-    sleep(5)
-    print("started")
-    runListeners()
-    global input_events
-    script_dir = os.path.dirname(__file__)
-    file_path = os.path.join(script_dir, 'recordings', f'{OUTPUT_FILENAME}.json')
-    with open(file_path, "w") as outfile:
-        json.dump(input_events, outfile, indent=4)
 
 def elapsed_time():
     global start_time
@@ -110,5 +100,16 @@ def runListeners():
 
     mouse_listener.join()
 
+    print("Key logger has been stopped.")
+
+def main(output_filename='default_name'):
+    count_down_timer()
+    runListeners()
+    global input_events
+    script_dir = os.path.dirname(__file__)
+    file_path = os.path.join(script_dir, 'recordings', f'{output_filename}.json')
+    with open(file_path, "w") as outfile:
+        json.dump(input_events, outfile, indent=4)
+        
 if __name__ == "__main__":
     main()
