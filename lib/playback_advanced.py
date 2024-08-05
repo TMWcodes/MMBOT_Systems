@@ -18,7 +18,7 @@ def log_clicks(log_data, coordinates, color, elapsed_time):
 def playActions(filename, path_type='spline', vary_coords=False, variation=0.05):
     script_dir = os.path.dirname(__file__)
     file_path = os.path.join(script_dir, 'recordings', filename)
-    
+    print(f"file_path is {file_path}")
     log_data = []
     start_time = time() 
     with open(file_path, "r") as jsonfile:
@@ -91,22 +91,30 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.05)
     
     
     # Save logged data to a new JSON file in the log_records folder with a single .json extension
+    print(f"script_dir: {script_dir}")
+
     log_dir = os.path.join(script_dir, 'log_records')
     os.makedirs(log_dir, exist_ok=True)  # Create the log_records directory if it doesn't exist
-
-    base_filename, _ = os.path.splitext(filename)
-    log_file_path = os.path.join(log_dir, f'{base_filename}_log.json')
+    print(f"log_dir: {log_dir}")
+    base_filename = os.path.splitext(os.path.basename(filename))[0]
+    print(f"base filename: {base_filename}")
+    log_record_path = os.path.join(log_dir, f'{base_filename}_log.json')
     # If the log file already exists, find a new filename
-    if os.path.exists(log_file_path):
-        i = 1
-        new_log_file_path = log_file_path
-        while os.path.exists(new_log_file_path):
-            new_log_file_path = os.path.join(log_dir, f'{base_filename}_log_{i}.json')
-            i += 1
-        log_file_path = new_log_file_path
+    print(f"log record path is: {log_record_path}")
+    
 
-    with open(log_file_path, 'w') as log_file:
+    if os.path.exists(log_record_path):
+        i = 1
+        new_log_record_path = log_record_path
+        while os.path.exists(new_log_record_path):
+            new_log_record_path = os.path.join(log_dir, f'{base_filename}_log_{i}.json')
+            i += 1
+        log_record_path = new_log_record_path
+
+    with open(log_record_path, 'w') as log_file:
         json.dump(log_data, log_file, indent=4)
+
+    print(f"Log data saved to: {log_record_path}")
 
 def convertKey(button):
     PYNPUT_SPECIAL_CASE_MAP = {

@@ -60,34 +60,32 @@ def generate_spline_path(start_position, end_position):
 # #####BREAK######
 
 def create_bezier_path(start_pos, end_pos, num_control_points=4, randomness=10, degree=3):
+    x1, y1 = start_pos
+    x2, y2 = end_pos
 
-  x1, y1 = start_pos
-  x2, y2 = end_pos
+    x = np.linspace(x1, x2, num=num_control_points, dtype='int')
+    y = np.linspace(y1, y2, num=num_control_points, dtype='int')
 
-  # Distribute control points evenly
-  x = np.linspace(x1, x2, num=num_control_points, dtype='int')
-  y = np.linspace(y1, y2, num=num_control_points, dtype='int')
+    xr = [random.randint(-randomness, randomness) for k in range(num_control_points)]
+    yr = [random.randint(-randomness, randomness) for k in range(num_control_points)]
+    xr[0] = yr[0] = xr[-1] = yr[-1] = 0
+    x += xr
+    y += yr
 
-  # Randomize inner points a bit
-  xr = [random.randint(-randomness, randomness) for k in range(num_control_points)]
-  yr = [random.randint(-randomness, randomness) for k in range(num_control_points)]
-  xr[0] = yr[0] = xr[-1] = yr[-1] = 0  # Fix first and last points
-  x += xr
-  y += yr
+    degree = min(degree, num_control_points - 1)
 
-  # Ensure degree is valid
-  degree = min(degree, num_control_points - 1)
+    try:
+        tck, u = splprep([x, y], k=degree)
+    except Exception as e:
+        print(f"Error creating Bezier path with x: {x}, y: {y}, degree: {degree}. Error: {e}")
+        return []  # Return an empty path on error
 
-  # Approximate using Bezier spline
-  tck, u = splprep([x, y], k=degree)
+    distance = point_dist(x1, y1, x2, y2)
+    num_points = 2 + int(distance / 50.0)
+    u = np.linspace(0, 1, num=num_points)
+    points = interpolate.splev(u, tck)
 
-  # Sample points along the curve based on distance
-  distance = point_dist(x1, y1, x2, y2)
-  num_points = 2 + int(distance / 50.0)
-  u = np.linspace(0, 1, num=num_points)
-  points = interpolate.splev(u, tck)
-
-  return list(zip(*(i.astype(int) for i in points)))
+    return list(zip(*(i.astype(int) for i in points)))
 
 def point_dist(x1, y1, x2, y2):
   """

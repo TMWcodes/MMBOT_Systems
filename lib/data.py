@@ -43,6 +43,7 @@ def load_coordinates_from_dicts(coordinates_list):
     coordinates = [[coord['x'], coord['y']] for coord in coordinates_list]
     return np.array(coordinates)
 
+## requires retesting to see if the sequence will play after timeline has been distrupted.
 def combine_json(file1_name, file2_name, output_file_name='combined_file.json'):
     script_dir = os.path.dirname(__file__)
     rec_dir = os.path.join(script_dir, 'recordings')
@@ -69,6 +70,22 @@ def combine_json(file1_name, file2_name, output_file_name='combined_file.json'):
     print(f'file1 has {len(data1)} entries, file2 has {len(data2)} entries, combined has {len(combined_data)} entries')
     print(f"Combined data written to {output_file} successfully!")
 
+## untested
+def merge_json_files(filenames):
+    merged_actions = []
+    for filename in filenames:
+        with open(filename, 'r') as file:
+            actions = json.load(file)
+            
+            if merged_actions:
+                # Update the time of actions in the current file
+                last_time_in_previous_file = merged_actions[-1]['time']
+                for action in actions:
+                    action['time'] += last_time_in_previous_file
+            
+            merged_actions.extend(actions)
+            
+    return merged_actions
 def compare_json_files(file1, file2):
     data1 = load_json(file1)
     data2 = load_json(file2)
@@ -357,7 +374,6 @@ def unflatten_json(flat):
         d[keys[-1]] = v
     return out
 
-
 def json_to_csv(json_filename, csv_filename):
     try:
         data = load_json(json_filename)
@@ -406,31 +422,14 @@ def csv_to_json(csv_filename, json_filename):
 def main():
        
 # Example usage
-    # json_to_csv('color_coord_test_01_log_1.json', 'csv_data/output.csv')
-    # csv_to_json('csv_data/output.csv', 'log_records/output.json')
+   
     filename = 'combined_file.json'
     ignore_moves = 'yes'
 # #     filename = input("Enter file name: ")
 # #     ignore_moves = input("Ignore move actions? (yes/no): ").strip().lower() == 'yes'
     print("from json") 
 #     compute_time_stats(filename)
-    # events = load_json(filename)
-    events = [
-    {"time": 0.0, "type": "click", "pos": [1425, 469]},
-    {"time": 1.0, "type": "click", "pos": [1425, 469]},
-    {"time": 2.0, "type": "click", "pos": [1430, 470]},
-    {"time": 3.0, "type": "click", "pos": [1425, 469]},
-    {"time": 4.0, "type": "click", "pos": [1425, 469]},
-    {"time": 5.0, "type": "click", "pos": [1430, 470]},
-    {"time": 6.0, "type": "click", "pos": [1425, 469]},
-    {"time": 7.0, "type": "click", "pos": [1425, 469]},
-    {"time": 8.0, "type": "click", "pos": [1430, 470]},
-    {"time": 9.0, "type": "click", "pos": [1500, 480]},  # Not part of the repeated sequence
-    {"time": 10.0, "type": "click", "pos": [1425, 469]},
-    {"time": 11.0, "type": "click", "pos": [1425, 469]},
-    {"time": 12.0, "type": "click", "pos": [1430, 470]},
-    {"time": 13.0, "type": "click", "pos": [1425, 469]}
-]
+    events = load_json(filename)
     coordinates = load_coordinates(events, ignore_moves)
     print(coordinates)
     repeated_sequences = detect_repeated_sequences(coordinates)
@@ -477,6 +476,9 @@ def main():
 
 #     for num_repeats in [1, num_repeats, 100]:
 #         autocorr_metric = plot_autocorrelation(coordinates, num_repeats)
+
+# json_to_csv('color_coord_test_01_log_1.json', 'csv_data/output.csv')
+# csv_to_json('csv_data/output.csv', 'log_records/output.json')
 
 # # compare json files
 # # file_in = input("enter second file to compare: ")
