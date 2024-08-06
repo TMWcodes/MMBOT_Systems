@@ -103,9 +103,11 @@ def runListeners():
     print("Key logger has been stopped.")
 
 def main(output_filename='default_name'):
+    global input_events
+    # Reinitialize input_events to ensure it's empty for each recording
+    input_events = []
     count_down_timer()
     runListeners()
-    global input_events
     script_dir = os.path.dirname(__file__)
     file_path = os.path.join(script_dir, 'recordings', f'{output_filename}.json')
     with open(file_path, "w") as outfile:

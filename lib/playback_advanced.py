@@ -91,16 +91,16 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.05)
     
     
     # Save logged data to a new JSON file in the log_records folder with a single .json extension
-    print(f"script_dir: {script_dir}")
+    # print(f"script_dir: {script_dir}")
 
     log_dir = os.path.join(script_dir, 'log_records')
     os.makedirs(log_dir, exist_ok=True)  # Create the log_records directory if it doesn't exist
-    print(f"log_dir: {log_dir}")
+    # print(f"log_dir: {log_dir}")
     base_filename = os.path.splitext(os.path.basename(filename))[0]
-    print(f"base filename: {base_filename}")
+    # print(f"base filename: {base_filename}")
     log_record_path = os.path.join(log_dir, f'{base_filename}_log.json')
     # If the log file already exists, find a new filename
-    print(f"log record path is: {log_record_path}")
+    # print(f"log record path is: {log_record_path}")
     
 
     if os.path.exists(log_record_path):

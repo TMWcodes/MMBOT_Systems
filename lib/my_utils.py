@@ -46,7 +46,7 @@ def vary_coordinates(x, y, variation):
     return x_variation, y_variation
 
 # checks colour, checks against expected colour, checks methods against eachother
-def check_color(coordinates=(1741,95)):
+def check_color(coordinates, delay=0.1):
     if not isinstance(coordinates, (tuple, list)) or len(coordinates) != 2:
         raise ValueError("Coordinates must be a tuple or list of two integers")
     
@@ -54,17 +54,16 @@ def check_color(coordinates=(1741,95)):
     if not isinstance(x, int) or not isinstance(y, int):
         raise ValueError("Both coordinates must be integers")
 
+    time.sleep(delay)
     im = pyautogui.screenshot()
-    pixel_color = im.getpixel((x, y))
-
-    pixel = pyautogui.pixel(x, y)
-
-    if pixel_color != pixel:
-        print("Two different pixel readings:", pixel_color, pixel)
-    else:
-        print("Pixel readings match:", pixel)
+    pixel_color= im.getpixel(coordinates)
     
-    return pixel
+    if pixel_color == (255, 0, 0):
+        print("Red x recorded at", coordinates)
+        pixel_color = pyautogui.pixel(x, y)
+    return pixel_color
+
+
 
 def compare_colors(coordinates=(1741,95), expected_color=(33, 37, 43)):
     match = pyautogui.pixelMatchesColor(coordinates[0],coordinates[1], (expected_color))

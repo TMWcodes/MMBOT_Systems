@@ -86,6 +86,37 @@ def merge_json_files(filenames):
             merged_actions.extend(actions)
             
     return merged_actions
+
+def filter_clicks(events):
+    clicks = [event for event in events if event.get('type') == 'click']
+    return clicks
+
+def compare_clicks(file1, file2):
+    if len(file1) != len(file2):
+        print(f"Files have different number of click entries: {len(file1)} vs {len(file2)}")
+        return
+
+    differences = []
+    for i, (entry1, entry2) in enumerate(zip(file1, file2)):
+        pos1, color1 = entry1['pos'], entry1['color']
+        pos2, color2 = entry2['pos'], entry2['color']
+        
+        if pos1 != pos2 or color1 != color2:
+            differences.append({
+                'index': i,
+                'file1': {'pos': pos1, 'color': color1},
+                'file2': {'pos': pos2, 'color': color2}
+            })
+
+    if differences:
+        print(f"Differences found in {len(differences)} entries:")
+        for diff in differences:
+            print(f"Index {diff['index']}:")
+            print(f"  File 1 - Pos: {diff['file1']['pos']}, Color: {diff['file1']['color']}")
+            print(f"  File 2 - Pos: {diff['file2']['pos']}, Color: {diff['file2']['color']}")
+    else:
+        print("No differences found")
+        
 def compare_json_files(file1, file2):
     data1 = load_json(file1)
     data2 = load_json(file2)
@@ -114,6 +145,7 @@ def compare_json_files(file1, file2):
             print(f"  File 2 - Pos: {diff['file2']['pos']}, Color: {diff['file2']['color']}")
     else:
         print("No differences found")
+        
 # Calculate time differences between consecutive events with an option to ignore move actions
 def calculate_time_differences(events, ignore_moves=False):
     time_diffs = []
@@ -423,17 +455,17 @@ def main():
        
 # Example usage
    
-    filename = 'combined_file.json'
-    ignore_moves = 'yes'
-# #     filename = input("Enter file name: ")
-# #     ignore_moves = input("Ignore move actions? (yes/no): ").strip().lower() == 'yes'
-    print("from json") 
-#     compute_time_stats(filename)
-    events = load_json(filename)
-    coordinates = load_coordinates(events, ignore_moves)
-    print(coordinates)
-    repeated_sequences = detect_repeated_sequences(coordinates)
-    print("Repeated Sequences:", repeated_sequences)
+#     filename = 'combined_file.json'
+#     ignore_moves = 'yes'
+# # #     filename = input("Enter file name: ")
+# # #     ignore_moves = input("Ignore move actions? (yes/no): ").strip().lower() == 'yes'
+#     print("from json") 
+# #     compute_time_stats(filename)
+#     events = load_json(filename)
+#     coordinates = load_coordinates(events, ignore_moves)
+#     print(coordinates)
+#     repeated_sequences = detect_repeated_sequences(coordinates)
+#     print("Repeated Sequences:", repeated_sequences)
     
 #     rock_coords = divide_coordinates(coordinates, 5, '')
 
@@ -482,12 +514,12 @@ def main():
 
 # # compare json files
 # # file_in = input("enter second file to compare: ")
-    # file1 = 'color_coord_test_01_log_1.json'
-    # file2 = 'output.json'
-    # try:
-    #     compare_json_files(file1, file2)
-    # except FileNotFoundError as e:
-    #     print(e)
+    file1 = 'lum_mine_copper_01.json'
+    file2 = 'lum_mine_copper_01_log.json'
+    try:
+        compare_json_files(file1, file2)
+    except FileNotFoundError as e:
+        print(e)
 
 #     file_1 = ''
 #     file_2 = ''
