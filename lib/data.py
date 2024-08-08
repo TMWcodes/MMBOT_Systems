@@ -168,7 +168,25 @@ def compute_statistics(time_diffs):
     
     return min_time, max_time, avg_time, std_time
 
-# Apply K-Means Clustering
+def compute_time_stats(filename, ignore_moves="yes"):
+    events = load_json(filename)
+    time_diffs = calculate_time_differences(events, ignore_moves)
+    # Compute and print time statistics
+    min_time, max_time, avg_time, std_time = compute_statistics(time_diffs)
+    print(f"Min time between actions: {min_time:.3f} seconds")
+    print(f"Max time between actions: {max_time:.3f} seconds")
+    print(f"Average time between actions: {avg_time:.3f} seconds")
+    print(f"Standard deviation of time differences: {std_time} seconds")
+    if min_time is None:
+        min_time, max_time, avg_time, std_time = 0, 0, 0, 0
+    
+    return min_time, max_time, avg_time, std_time
+    # if avg_time < 0.2 and std_time < 0.1:  # Example thresholds
+    #     print("Suspicious bot-like behavior detected!")
+    # else:
+    #     print("Likely human behavior.")
+# Convert coordinates list to NumPy array
+    
 
 def calculate_shannon_entropy(sequence):
     unique, counts = np.unique(sequence, axis=0, return_counts=True)
@@ -269,20 +287,6 @@ def detect_repeated_sequences(coordinates, min_sequence_length=3, min_repetition
     repeated_sequences = {seq: indices for seq, indices in sequences.items() if len(indices) >= min_repetitions}
     return repeated_sequences
 
-def compute_time_stats(filename, ignore_moves="yes"):
-    events = load_json(filename)
-    time_diffs = calculate_time_differences(events, ignore_moves)
-    # Compute and print time statistics
-    min_time, max_time, avg_time, std_time = compute_statistics(time_diffs)
-    print(f"Min time between actions: {min_time:.3f} seconds")
-    print(f"Max time between actions: {max_time:.3f} seconds")
-    print(f"Average time between actions: {avg_time:.3f} seconds")
-    print(f"Standard deviation of time differences: {std_time} seconds")
-    # if avg_time < 0.2 and std_time < 0.1:  # Example thresholds
-    #     print("Suspicious bot-like behavior detected!")
-    # else:
-    #     print("Likely human behavior.")
-# Convert coordinates list to NumPy array
 
 def divide_coordinates(coords, num_groups, output_file_name):
     script_dir = os.path.dirname(__file__)

@@ -2,7 +2,11 @@ import pytest
 import os
 import json
 from unittest import mock
-from lib.data import load_json, load_coordinates, combine_json, calculate_shannon_entropy, detect_repetition,detect_repeated_sequences ,calculate_time_differences, cluster, plot_autocorrelation
+from lib.data import (
+    load_json, load_coordinates, combine_json, calculate_shannon_entropy,
+    detect_repetition,detect_repeated_sequences ,calculate_time_differences, cluster, plot_autocorrelation,
+    filter_clicks, compare_clicks, compare_json_files
+    )
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
@@ -162,3 +166,19 @@ def test_detect_repeated_sequences():
 
     repeated_sequences = detect_repeated_sequences(coordinates)
     assert repeated_sequences == expected_repeated_sequences, f"Expected {expected_repeated_sequences}, but got {repeated_sequences}"
+#####
+def test_filter_clicks():
+    events = [
+        {"time": 2.2, "type": "click", "button": "Button.left", "pos": [1442, 451], "color": [104, 68, 38]},
+        {"time": 5.8, "type": "click", "button": "Button.left", "pos": [1371, 548], "color": [78, 51, 28]},
+        {"time": 6.6, "type": "move", "button": "None", "pos": [1372, 546], "color": None},
+        {"time": 18.7, "type": "click", "button": "Button.left", "pos": [1372, 565], "color": [107, 71, 39]}
+    ]
+    
+    expected = [
+        {"time": 2.2, "type": "click", "button": "Button.left", "pos": [1442, 451], "color": [104, 68, 38]},
+        {"time": 5.8, "type": "click", "button": "Button.left", "pos": [1371, 548], "color": [78, 51, 28]},
+        {"time": 18.7, "type": "click", "button": "Button.left", "pos": [1372, 565], "color": [107, 71, 39]}
+    ]
+    
+    assert filter_clicks(events) == expected

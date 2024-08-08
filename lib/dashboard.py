@@ -1,13 +1,10 @@
 import tkinter as tk
-from tkinter import filedialog, simpledialog
-from controller import run_key_logger, playActions
-from locate import get_starting_position
+from tkinter import filedialog, messagebox
 from controller import (
-    select_files, remove_files_from_listbox, move_up_in_listbox, move_down_in_listbox,
-    play_files_sequentially, start_key_logger_with_filename
+    select_files, remove_items_from_list, move_item_up, move_item_down,
+    play_files_sequentially, start_key_logger_with_filename, get_playback_config,
+    filter_clicks, compare_json_files, compare_clicks, load_json, get_time_stats
 )
-from data import filter_clicks, compare_json_files, compare_clicks, load_coordinates, load_json
-
 
 def add_files():
     filenames = select_files()
@@ -15,28 +12,43 @@ def add_files():
         file_listbox.insert(tk.END, filename)
 
 def remove_selected():
-    remove_files_from_listbox(file_listbox)
+    items = list(file_listbox.get(0, tk.END))
+    selected_indices = file_listbox.curselection()
+    new_items = remove_items_from_list(items, selected_indices)
+    file_listbox.delete(0, tk.END)
+    for item in new_items:
+        file_listbox.insert(tk.END, item)
 
 def move_up():
-    move_up_in_listbox(file_listbox)
+    items = list(file_listbox.get(0, tk.END))
+    selected_indices = file_listbox.curselection()
+    new_items = move_item_up(items, selected_indices)
+    file_listbox.delete(0, tk.END)
+    for item in new_items:
+        file_listbox.insert(tk.END, item)
+    for index in selected_indices:
+        if index > 0:
+            file_listbox.selection_set(index - 1)
 
 def move_down():
-    move_down_in_listbox(file_listbox)
+    items = list(file_listbox.get(0, tk.END))
+    selected_indices = file_listbox.curselection()
+    new_items = move_item_down(items, selected_indices)
+    file_listbox.delete(0, tk.END)
+    for item in new_items:
+        file_listbox.insert(tk.END, item)
+    for index in selected_indices:
+        if index < len(new_items) - 1:
+            file_listbox.selection_set(index + 1)
 
+# New function to play selected actions
 def play_selected_actions():
     filenames = file_listbox.get(0, tk.END)
     if not filenames:
         return
     
-    path_type = simpledialog.askstring("Input", "Enter path type:", initialvalue='spline')
-    vary_coords_str = simpledialog.askstring("Input", "Vary coordinates? (yes/no)", initialvalue='yes')
-    vary_coords = vary_coords_str.lower() in ['yes', 'true', '1']
-    variation = simpledialog.askfloat("Input", "Enter variation:", initialvalue=0.05)
-    delay = simpledialog.askfloat("Input", "Enter delay between actions:", initialvalue=2)
-    loop_reps = simpledialog.askinteger("Input", "Enter number of times to loop:", initialvalue=1)
-
-    play_files_sequentially(filenames, path_type, vary_coords, variation, delay, loop_reps)
-    
+    config = get_playback_config()
+    play_files_sequentially(filenames, **config)
     print("All actions have been played.")
 
 # New function to compare selected JSON files
@@ -45,13 +57,12 @@ def compare_selected_json(filtered=True):
     if len(selected_files) == 2:
         file1 = file_listbox.get(selected_files[0])
         file2 = file_listbox.get(selected_files[1])
-        print(file1)
-        print(file2)
+
         # Load JSON data from the selected files
         data1 = load_json(file1)
         data2 = load_json(file2)
-
-        if filtered:
+        
+        if filtered:  # If filter is true
             # Filter out only click entries
             data1 = filter_clicks(data1)
             data2 = filter_clicks(data2)
@@ -62,12 +73,47 @@ def compare_selected_json(filtered=True):
         else:
             result = compare_json_files(file1, file2)
         return result
-
     else:
         print("Please select exactly 2 files to compare.")
-# Create the main application window
+
+def display_time_stats():
+    selected_files = file_listbox.curselection()
+    if len(selected_files) != 1:
+        messagebox.showerror("Error", "Please select exactly one file to analyze.")
+        return
+
+    file_path = file_listbox.get(selected_files[0])
+    ignore_moves = messagebox.askyesno("Ignore Moves", "Ignore move actions?")
+
+    try:
+        result = get_time_stats(file_path, ignore_moves)
+        if result is None:
+            messagebox.showerror("Error", "Failed to compute time statistics.")
+            return
+
+        min_time, max_time, avg_time, std_time = result
+
+        # Update the stats display window
+        stats_text.config(state=tk.NORMAL)
+        stats_text.delete(1.0, tk.END)
+        stats_text.insert(tk.END, f"Min time between actions: {min_time:.3f} seconds\n")
+        stats_text.insert(tk.END, f"Max time between actions: {max_time:.3f} seconds\n")
+        stats_text.insert(tk.END, f"Average time between actions: {avg_time:.3f} seconds\n")
+        stats_text.insert(tk.END, f"Standard deviation: {std_time:.3f} seconds\n")
+        stats_text.config(state=tk.DISABLED)
+
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
+
+# Create widgets and layout
+def create_widgets(root):
+    global stats_text
+    stats_text = tk.Text(root, width=50, height=10, state=tk.DISABLED)
+    stats_text.pack(pady=10)
+
+# Main application window
 root = tk.Tk()
-root.title("Tkinter with PyAutoGUI")
+root.title("Dashboard")
 
 file_listbox = tk.Listbox(root, selectmode=tk.MULTIPLE, width=100, height=15)
 file_listbox.pack(pady=10)
@@ -79,8 +125,8 @@ move_down_button = tk.Button(root, text="Move Down", command=move_down)
 play_record_button = tk.Button(root, text="Play Selected Actions", command=play_selected_actions)
 start_record_button = tk.Button(root, text="Start Key Logger", command=start_key_logger_with_filename)
 
-# Button to compare selected JSON files
 compare_json_button = tk.Button(root, text="Compare Selected JSON", command=compare_selected_json)
+time_stats_button = tk.Button(root, text="Show Time Statistics", command=display_time_stats)
 
 # Pack the buttons into the window
 add_files_button.pack(pady=5)
@@ -89,6 +135,10 @@ move_up_button.pack(pady=5)
 move_down_button.pack(pady=5)
 play_record_button.pack(pady=20)
 start_record_button.pack(pady=20)
-compare_json_button.pack(pady=20)  # Add the compare button
+compare_json_button.pack(pady=5)
+time_stats_button.pack(pady=5)
+
+# Create a permanent stats display frame
+create_widgets(root)
 
 root.mainloop()
