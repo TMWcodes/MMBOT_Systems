@@ -66,4 +66,27 @@ def get_time_stats(file_path, ignore_moves=True):
         print(f"An error occurred: {e}")
         return None, None, None, None
 
+def get_repeated_sequences(file_path, min_sequence_length=3, min_repetitions=2):
+    data = load_json(file_path)
+    coordinates = []
 
+    for event in data:
+        if event.get('type') == 'click':  # Only process 'click' events
+            pos = event.get('pos')
+            if pos and len(pos) == 2:  # Ensure pos has both x and y
+                coordinates.append(tuple(pos))  # Convert list to tuple for hashing
+
+    if not coordinates:
+        raise ValueError("No valid coordinates found in the selected file.")
+
+    repeated_sequences = detect_repeated_sequences(coordinates, min_sequence_length, min_repetitions)
+    return repeated_sequences
+
+
+def process_repeated_sequences(file_path, repetitions):
+    data = load_json(file_path)
+    coordinates = [event['pos'] for event in data if event['type'] == 'click']
+    extended_data = coordinates * repetitions
+
+    # Get the count of repeated sequences
+    return detect_repeated_sequences(extended_data)

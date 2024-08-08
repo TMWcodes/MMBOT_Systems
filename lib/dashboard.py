@@ -1,9 +1,10 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, simpledialog
 from controller import (
     select_files, remove_items_from_list, move_item_up, move_item_down,
     play_files_sequentially, start_key_logger_with_filename, get_playback_config,
-    filter_clicks, compare_json_files, compare_clicks, load_json, get_time_stats
+    filter_clicks, compare_json_files, compare_clicks, load_json, get_time_stats, get_repeated_sequences,
+    process_repeated_sequences
 )
 
 def add_files():
@@ -111,6 +112,29 @@ def create_widgets(root):
     stats_text = tk.Text(root, width=50, height=10, state=tk.DISABLED)
     stats_text.pack(pady=10)
 
+def analyze_repeated_sequences():
+    selected_files = file_listbox.curselection()
+    if len(selected_files) != 1:
+        messagebox.showerror("Error", "Please select exactly one file to analyze.")
+        return
+
+    file_path = file_listbox.get(selected_files[0])
+    repetitions = simpledialog.askinteger("Repetitions", "Enter number of repetitions:", minvalue=1, maxvalue=100)
+    if repetitions is None:
+        return
+
+    try:
+        # Call the controller function to process repeated sequences
+        repeated_sequence_count = process_repeated_sequences(file_path, repetitions)
+
+        # Update the stats display window with repeated sequences results
+        stats_text.config(state=tk.NORMAL)
+        stats_text.insert(tk.END, f"Number of repeated sequences across {repetitions} repetitions: {repeated_sequence_count}\n")
+        stats_text.config(state=tk.DISABLED)
+
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
+
 # Main application window
 root = tk.Tk()
 root.title("Dashboard")
@@ -124,7 +148,7 @@ move_up_button = tk.Button(root, text="Move Up", command=move_up)
 move_down_button = tk.Button(root, text="Move Down", command=move_down)
 play_record_button = tk.Button(root, text="Play Selected Actions", command=play_selected_actions)
 start_record_button = tk.Button(root, text="Start Key Logger", command=start_key_logger_with_filename)
-
+repeated_sequences_button = tk.Button(root, text="Analyze Repeated Sequences", command=analyze_repeated_sequences)
 compare_json_button = tk.Button(root, text="Compare Selected JSON", command=compare_selected_json)
 time_stats_button = tk.Button(root, text="Show Time Statistics", command=display_time_stats)
 
@@ -137,6 +161,8 @@ play_record_button.pack(pady=20)
 start_record_button.pack(pady=20)
 compare_json_button.pack(pady=5)
 time_stats_button.pack(pady=5)
+repeated_sequences_button.pack(pady=20)
+
 
 # Create a permanent stats display frame
 create_widgets(root)

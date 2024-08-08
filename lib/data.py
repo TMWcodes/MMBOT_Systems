@@ -284,8 +284,10 @@ def detect_repeated_sequences(coordinates, min_sequence_length=3, min_repetition
         else:
             sequences[sequence] = [i]
 
-    repeated_sequences = {seq: indices for seq, indices in sequences.items() if len(indices) >= min_repetitions}
-    return repeated_sequences
+    # repeated_sequences = {seq: indices for seq, indices in sequences.items() if len(indices) >= min_repetitions}
+    # return repeated_sequences
+    repeated_sequence_count = sum(1 for indices in sequences.values() if len(indices) >= min_repetitions)
+    return repeated_sequence_count
 
 
 def divide_coordinates(coords, num_groups, output_file_name):
