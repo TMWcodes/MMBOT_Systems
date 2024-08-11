@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import filedialog, messagebox, simpledialog
 from controller import (
     select_files, remove_items_from_list, move_item_up, move_item_down,
@@ -232,7 +233,6 @@ def plot_autocorrelation_for_selected():
         messagebox.showerror("Error", f"An error occurred: {e}")
 
 
-
 def perform_clustering():
     selected_files = file_listbox.curselection()
     if len(selected_files) != 1:
@@ -270,33 +270,56 @@ def perform_clustering():
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
 
-# Add button for clustering
 
+# mouses scrolling
+def on_mouse_wheel(event):
+    # Scroll up or down depending on the mouse wheel movement
+    canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
 # Main application window
 root = tk.Tk()
 root.title("Dashboard")
 
-file_listbox = tk.Listbox(root, selectmode=tk.MULTIPLE, width=100, height=15)
+canvas = tk.Canvas(root)
+scrollbar = ttk.Scrollbar(root, orient="vertical", command=canvas.yview)
+scrollable_frame = ttk.Frame(canvas)
+
+# Configure scrollable frame
+def on_frame_configure(event):
+    canvas.configure(scrollregion=canvas.bbox("all"))
+
+scrollable_frame.bind("<Configure>", on_frame_configure)
+
+# Add scrollable frame to canvas
+canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+canvas.pack(side="left", fill="both", expand=True)
+scrollbar.pack(side="right", fill="y")
+canvas.configure(yscrollcommand=scrollbar.set)
+
+root.bind_all("<MouseWheel>", on_mouse_wheel)  # For Windows and macOS
+
+
+# File Listbox
+file_listbox = tk.Listbox(scrollable_frame, selectmode=tk.MULTIPLE, width=100, height=15)
 file_listbox.pack(pady=10)
 
-add_files_button = tk.Button(root, text="Add JSON Files", command=add_files)
-remove_files_button = tk.Button(root, text="Remove Selected", command=remove_selected)
-move_up_button = tk.Button(root, text="Move Up", command=move_up)
-move_down_button = tk.Button(root, text="Move Down", command=move_down)
-merge_json_button = tk.Button(root, text="Merge JSON Files", command=merge_json_files_action)
-play_record_button = tk.Button(root, text="Play Selected Actions", command=play_selected_actions)
-start_record_button = tk.Button(root, text="Start Key Logger", command=start_key_logger_with_filename)
-repeated_sequences_button = tk.Button(root, text="Analyze Repeated Sequences", command=analyze_repeated_sequences)
-compare_json_button = tk.Button(root, text="Compare Selected JSON", command=compare_selected_json)
-time_stats_button = tk.Button(root, text="Show Time Statistics", command=display_time_stats)
-shannon_entropy_button = tk.Button(root, text="Calculate Shannon Entropy", command=display_shannon_entropy)
-detailed_sequences_button = tk.Button(root, text="View Repeated Sequences", command=display_repeated_sequences_detailed)
-autocorrelation_button = tk.Button(root, text="Plot Autocorrelation", command=plot_autocorrelation_for_selected)
-clustering_button = tk.Button(root, text="Cluster Coordinates", command=perform_clustering)
+# Buttons
+add_files_button = tk.Button(scrollable_frame, text="Add JSON Files", command=add_files)
+remove_files_button = tk.Button(scrollable_frame, text="Remove Selected", command=remove_selected)
+move_up_button = tk.Button(scrollable_frame, text="Move Up", command=move_up)
+move_down_button = tk.Button(scrollable_frame, text="Move Down", command=move_down)
+merge_json_button = tk.Button(scrollable_frame, text="Merge JSON Files", command=merge_json_files_action)
+play_record_button = tk.Button(scrollable_frame, text="Play Selected Actions", command=play_selected_actions)
+start_record_button = tk.Button(scrollable_frame, text="Start Key Logger", command=start_key_logger_with_filename)
+repeated_sequences_button = tk.Button(scrollable_frame, text="Analyze Repeated Sequences", command=analyze_repeated_sequences)
+compare_json_button = tk.Button(scrollable_frame, text="Compare Selected JSON", command=compare_selected_json)
+time_stats_button = tk.Button(scrollable_frame, text="Show Time Statistics", command=display_time_stats)
+shannon_entropy_button = tk.Button(scrollable_frame, text="Calculate Shannon Entropy", command=display_shannon_entropy)
+detailed_sequences_button = tk.Button(scrollable_frame, text="View Repeated Sequences", command=display_repeated_sequences_detailed)
+autocorrelation_button = tk.Button(scrollable_frame, text="Plot Autocorrelation", command=plot_autocorrelation_for_selected)
+clustering_button = tk.Button(scrollable_frame, text="Cluster Coordinates", command=perform_clustering)
 
-
-# Pack the buttons into the window
+# Pack buttons into scrollable frame
 add_files_button.pack(pady=5)
 remove_files_button.pack(pady=5)
 move_up_button.pack(pady=5)
@@ -311,6 +334,7 @@ detailed_sequences_button.pack(pady=5)
 shannon_entropy_button.pack(pady=20)
 autocorrelation_button.pack(pady=20)
 clustering_button.pack(pady=20)
+
 # Create a permanent stats display frame
 create_widgets(root)
 
