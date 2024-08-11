@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
 import json
 import os
 from scipy.stats import entropy
@@ -44,47 +42,38 @@ def load_coordinates_from_dicts(coordinates_list):
     return np.array(coordinates)
 
 ## requires retesting to see if the sequence will play after timeline has been distrupted.
-def combine_json(file1_name, file2_name, output_file_name='combined_file.json'):
-    script_dir = os.path.dirname(__file__)
-    rec_dir = os.path.join(script_dir, 'recordings')
-
-    file1 = os.path.join(rec_dir, file1_name)
-    file2 = os.path.join(rec_dir, file2_name)
-    output_file = os.path.join(rec_dir, output_file_name)
-
-    if not os.path.exists(file1):
-        print(f"Error: {file1} not found.")
-        return
-    if not os.path.exists(file2):
-        print(f"Error: {file2} not found.")
-        return
-
-    with open(file1, 'r') as f1:
-        data1 = json.load(f1)
-    with open(file2, 'r') as f2:
-        data2 = json.load(f2)
-
-    combined_data = data1 + data2
-    with open(output_file, 'w') as f_out:
-        json.dump(combined_data, f_out, indent=2)
-    print(f'file1 has {len(data1)} entries, file2 has {len(data2)} entries, combined has {len(combined_data)} entries')
-    print(f"Combined data written to {output_file} successfully!")
-
-## untested
-def merge_json_files(filenames):
+def merge_json_files(filenames, output_file_name='merged_file.json'):
     merged_actions = []
-    for filename in filenames:
+    total_entries = 0
+
+    for i, filename in enumerate(filenames):
+        if not os.path.exists(filename):
+            print(f"Error: {filename} not found.")
+            return
+
         with open(filename, 'r') as file:
             actions = json.load(file)
-            
-            if merged_actions:
+
+            if i > 0:
                 # Update the time of actions in the current file
                 last_time_in_previous_file = merged_actions[-1]['time']
                 for action in actions:
                     action['time'] += last_time_in_previous_file
             
             merged_actions.extend(actions)
-            
+            total_entries += len(actions)
+            print(f'File {filename} has {len(actions)} entries.')
+
+    print(f'Combined total entries: {total_entries}')
+
+    script_dir = os.path.dirname(__file__)
+    rec_dir = os.path.join(script_dir, 'recordings')
+    output_file = os.path.join(rec_dir, output_file_name)
+
+    with open(output_file, 'w') as f_out:
+        json.dump(merged_actions, f_out, indent=2)
+    
+    print(f"Combined data written to {output_file} successfully!")
     return merged_actions
 
 def filter_clicks(events):
@@ -195,61 +184,6 @@ def calculate_shannon_entropy(sequence):
     return shannon_entropy
 
 # Elbow method to determine the optimal number of clusters
-def elbow_method(coordinates, max_clusters):
-    wcss = []
-    for i in range(1, max_clusters + 1):
-        kmeans = KMeans(n_clusters=i, n_init=10, random_state=42)
-        kmeans.fit(coordinates)
-        wcss.append(kmeans.inertia_)
-
-    plt.plot(range(1, max_clusters + 1), wcss, marker="o")
-    plt.title('Elbow Method')
-    plt.xlabel('Number of clusters')
-    plt.ylabel('WCSS')
-    # plt.show()
-
-    first_derivative = np.diff(wcss)
-    second_derivative = np.diff(first_derivative)
-    elbow_point = np.argmax(second_derivative) + 2  # +2 to account for the diff shifting the indices
-    return elbow_point
-
-# Silhouette scores to determine the optimal number of clusters
-def silhouette_scores(coordinates, max_clusters):
-    
-    silhouette_scores = []
-    for i in range(2, max_clusters + 1):
-        kmeans = KMeans(n_clusters=i, n_init=10, random_state=42)
-        kmeans.fit(coordinates)
-        score = silhouette_score(coordinates, kmeans.labels_)
-        silhouette_scores.append(score)
-
-    if silhouette_scores:
-        plt.plot(range(2, max_clusters + 1), silhouette_scores)
-        plt.title('Silhouette Scores')
-        plt.xlabel('Number of clusters')
-        plt.ylabel('Silhouette Score')
-        # plt.show()
-
-        optimal_clusters = np.argmax(silhouette_scores) + 2
-        return optimal_clusters
-    else:
-        return None
-
-# Apply K-Means Clustering
-def cluster(coordinates, n_clusters=3):
-    kmeans = KMeans(n_clusters=n_clusters, n_init=10, random_state=42)
-    kmeans.fit(coordinates)
-    labels = kmeans.labels_
-    centroids = kmeans.cluster_centers_
-
-    # Plotting the results
-    plt.scatter(coordinates[:, 0], coordinates[:, 1], c=labels, cmap='viridis')
-    plt.scatter(centroids[:, 0], centroids[:, 1], s=300, c='red')
-    plt.xlabel('X coordinate')
-    plt.ylabel('Y coordinate')
-    plt.title('K-Means Clustering of Coordinates')
-    # plt.show()
-    return kmeans
 
 def detect_repetition(coordinates, threshold):
     coordinate_tuples = tuple(map(tuple, coordinates))
@@ -262,72 +196,29 @@ def detect_repetition(coordinates, threshold):
     
     return repeated_coordinates
 
-def detect_repeated_sequences(coordinates, min_sequence_length=3, min_repetitions=2):
-    def window(seq, n=2):
-        "Returns a sliding window (of width n) over data from the iterable"
-        it = iter(seq)
-        result = tuple(islice(it, n))
-        if len(result) == n:
-            yield result
-        for elem in it:
-            result = result[1:] + (elem,)
-            yield result
-
-    # Convert numpy arrays to tuples for hashing
-    coordinates = [tuple(coord) for coord in coordinates]
-
+def count_repeated_sequences(coordinates, min_sequence_length=5, min_repetitions=2):
     sequences = {}
     for i in range(len(coordinates) - min_sequence_length + 1):
-        sequence = tuple(coordinates[i:i + min_sequence_length])
+        sequence = tuple(tuple(coord) for coord in coordinates[i:i + min_sequence_length])
         if sequence in sequences:
             sequences[sequence].append(i)
         else:
             sequences[sequence] = [i]
 
-    # repeated_sequences = {seq: indices for seq, indices in sequences.items() if len(indices) >= min_repetitions}
-    # return repeated_sequences
     repeated_sequence_count = sum(1 for indices in sequences.values() if len(indices) >= min_repetitions)
     return repeated_sequence_count
 
+def detect_repeated_sequences(coordinates, min_sequence_length=5, min_repetitions=2):
+    sequences = {}
+    for i in range(len(coordinates) - min_sequence_length + 1):
+        sequence = tuple(tuple(coord) for coord in coordinates[i:i + min_sequence_length])
+        if sequence in sequences:
+            sequences[sequence].append(i)
+        else:
+            sequences[sequence] = [i]
 
-def divide_coordinates(coords, num_groups, output_file_name):
-    script_dir = os.path.dirname(__file__)
-    log_dir = os.path.join(script_dir, 'data_points')
-    output_file = os.path.join(log_dir, output_file_name)
-    os.makedirs(log_dir, exist_ok=True)
-
-    structured_coords = {}
-    coords_per_group = len(coords) // num_groups
-    remainder = len(coords) % num_groups
-
-    start = 0
-    for i in range(num_groups):
-        end = start + coords_per_group + (1 if i < remainder else 0)
-        group_name = f'rock{i+1}'
-        structured_coords[group_name] = [{'x': int(coord[0]), 'y': int(coord[1])} for coord in coords[start:end]]
-        start = end
-    
-    with open(output_file, 'w') as f_out:
-        json.dump(structured_coords, f_out, indent=2)
-    print(f"Divided coordinates saved to {output_file}")
-
-    return structured_coords
- 
-def opt_clusters(coordinates):
-     # # Calculate the number of unique points in the coordinates
-    unique_points = len(np.unique(coordinates, axis=0))
-    max_clusters = min(unique_points, 10)
-    if unique_points < 2:
-        print("Not enough unique points to form silhouette clusters.")
-        return None
-    # # Determine the optimal number of clusters using elbow method and silhouette scores
-    optimal_clusters_elbow = elbow_method(coordinates, max_clusters)
-    optimal_clusters_silhouette = silhouette_scores(coordinates, max_clusters)
-    final_clusters = max(optimal_clusters_elbow, optimal_clusters_silhouette)
-    print(f"Optimal clusters (Elbow Method): {optimal_clusters_elbow}")
-    print(f"Optimal clusters (Silhouette Scores): {optimal_clusters_silhouette}")
-    print(f"Final clusters is: {final_clusters}")
-    return final_clusters
+    repeated_sequences = {seq: indices for seq, indices in sequences.items() if len(indices) >= min_repetitions}
+    return repeated_sequences
 
 def plot_autocorrelation(sequence, repetitions, figsize=(12, 6), max_lag=50):
     """
@@ -461,31 +352,19 @@ def main():
        
 # Example usage
    
-#     filename = 'combined_file.json'
-#     ignore_moves = 'yes'
-# # #     filename = input("Enter file name: ")
-# # #     ignore_moves = input("Ignore move actions? (yes/no): ").strip().lower() == 'yes'
-#     print("from json") 
-# #     compute_time_stats(filename)
-#     events = load_json(filename)
-#     coordinates = load_coordinates(events, ignore_moves)
-#     print(coordinates)
+#     
+#     compute_time_stats(filename)
 #     repeated_sequences = detect_repeated_sequences(coordinates)
 #     print("Repeated Sequences:", repeated_sequences)
     
 #     rock_coords = divide_coordinates(coordinates, 5, '')
 
-    
-# #     print("from dictionary")
-# #     coordinates_list = [
-# #     {'x': 1435, 'y': 758},
-# #     {'x': 1376, 'y': 696},
-# #     {'x': 1475, 'y': 302},
-# #     {'x': 1435, 'y': 758},  # Repeated coordinate
-# #     {'x': 1376, 'y': 696},  # Repeated coordinate
-# #     {'x': 1435, 'y': 758},  # Repeated coordinate
-# # ]
-# #     coordinates = load_coordinates_from_dicts(coordinates_list)
+#   coordinates_list = [
+#     {'x': 1435, 'y': 758},
+#     {'x': 1376, 'y': 696},
+#     {'x': 1475, 'y': 302}
+# ]
+#   coordinates = load_coordinates_from_dicts(coordinates_list)
    
 #     # Perform clustering with the optimal number of clusters
 #     final_clusters = opt_clusters(coordinates)

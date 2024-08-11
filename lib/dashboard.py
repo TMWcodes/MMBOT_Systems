@@ -3,9 +3,13 @@ from tkinter import filedialog, messagebox, simpledialog
 from controller import (
     select_files, remove_items_from_list, move_item_up, move_item_down,
     play_files_sequentially, start_key_logger_with_filename, get_playback_config,
-    filter_clicks, compare_json_files, compare_clicks, load_json, get_time_stats, get_repeated_sequences,
-    process_repeated_sequences
+    filter_clicks, compare_json_files, compare_clicks, load_json, get_time_stats, 
+    process_repeated_sequences, process_shannon_entropy,
+    get_repeated_sequences_detailed, merge_selected_json_files, plot_autocorrelation_from_file,
+    cluster, opt_clusters
+
 )
+import numpy as np
 
 def add_files():
     filenames = select_files()
@@ -124,16 +128,150 @@ def analyze_repeated_sequences():
         return
 
     try:
-        # Call the controller function to process repeated sequences
+        # Count the number of repeated sequences
         repeated_sequence_count = process_repeated_sequences(file_path, repetitions)
 
-        # Update the stats display window with repeated sequences results
+        # Update the stats display window
         stats_text.config(state=tk.NORMAL)
+        stats_text.delete(1.0, tk.END)
         stats_text.insert(tk.END, f"Number of repeated sequences across {repetitions} repetitions: {repeated_sequence_count}\n")
         stats_text.config(state=tk.DISABLED)
 
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
+
+def display_repeated_sequences_detailed():
+    selected_files = file_listbox.curselection()
+    if len(selected_files) != 1:
+        messagebox.showerror("Error", "Please select exactly one file to analyze.")
+        return
+
+    file_path = file_listbox.get(selected_files[0])
+    repetitions = simpledialog.askinteger("Repetitions", "Enter number of repetitions:", minvalue=1, maxvalue=100)
+    if repetitions is None:
+        return
+
+    try:
+        # Get the detailed repeated sequences
+        repeated_sequences = get_repeated_sequences_detailed(file_path, repetitions)
+
+        # Update the stats display window
+        stats_text.config(state=tk.NORMAL)
+        stats_text.delete(1.0, tk.END)
+        for seq, positions in repeated_sequences.items():
+            stats_text.insert(tk.END, f"Sequence: {seq}\nPositions: {positions}\n\n")
+        stats_text.config(state=tk.DISABLED)
+
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
+
+def display_shannon_entropy():
+    selected_files = file_listbox.curselection()
+    if len(selected_files) != 1:
+        messagebox.showerror("Error", "Please select exactly one file to analyze.")
+        return
+
+    file_path = file_listbox.get(selected_files[0])
+
+    try:
+        shannon_entropy_value = process_shannon_entropy(file_path)
+
+        stats_text.config(state=tk.NORMAL)
+        stats_text.delete(1.0, tk.END)
+        stats_text.insert(tk.END, f"Shannon Entropy of the selected file: {shannon_entropy_value:.3f}\n")
+        stats_text.config(state=tk.DISABLED)
+
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
+
+
+def merge_json_files_action():
+    # Get selected files from the listbox
+    selected_files = file_listbox.curselection()
+    if len(selected_files) < 2:  # Ensure at least two files are selected for merging
+        messagebox.showerror("Error", "Please select at least two files to merge.")
+        return
+
+    # Get the filenames from the selected indices
+    filenames = [file_listbox.get(i) for i in selected_files]
+
+    # Ask the user for an output filename
+    output_filename = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
+    if not output_filename:
+        return
+
+    # Call the controller function to merge the selected files
+    success = merge_selected_json_files(filenames, output_filename)
+    
+    if success:
+        messagebox.showinfo("Success", f"Merged JSON files into {output_filename}")
+    else:
+        messagebox.showerror("Error", "An error occurred while merging files.")
+
+def plot_autocorrelation_for_selected():
+    selected_files = file_listbox.curselection()
+    if len(selected_files) != 1:
+        messagebox.showerror("Error", "Please select exactly one file to plot autocorrelation.")
+        return
+
+    file_path = file_listbox.get(selected_files[0])
+    repetitions = simpledialog.askinteger("Repetitions", "Enter number of repetitions:", minvalue=1, maxvalue=100)
+    if repetitions is None:
+        return
+
+    try:
+        autocorrelation_results = plot_autocorrelation_from_file(file_path, repetitions)
+        
+        # Display the results in the stats text box
+        stats_text.config(state=tk.NORMAL)
+        stats_text.delete(1.0, tk.END)
+        stats_text.insert(tk.END, f"Autocorrelation Results for {file_path} with {repetitions} repetitions:\n")
+        stats_text.insert(tk.END, autocorrelation_results)
+        stats_text.config(state=tk.DISABLED)
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
+
+
+
+def perform_clustering():
+    selected_files = file_listbox.curselection()
+    if len(selected_files) != 1:
+        messagebox.showerror("Error", "Please select exactly one file to analyze.")
+        return
+
+    file_path = file_listbox.get(selected_files[0])
+    
+    # Ask user for number of clusters
+    n_clusters = simpledialog.askinteger("Number of Clusters", "Enter number of clusters (leave blank for auto):", minvalue=1, maxvalue=10, initialvalue=None)
+
+    try:
+        data = load_json(file_path)
+        coordinates = np.array([event.get('pos') for event in data if event.get('type') == 'click'])
+
+        if n_clusters is None:  # User clicked cancel or left it blank
+            n_clusters = opt_clusters(coordinates)
+            if n_clusters is None:
+                messagebox.showerror("Error", "Could not determine optimal number of clusters.")
+                return
+        elif n_clusters < 1:  # Handle invalid input for clusters
+            messagebox.showerror("Error", "Number of clusters must be at least 1.")
+            return
+
+        # Perform clustering
+        kmeans = cluster(coordinates, n_clusters)
+
+        # Update the stats display window
+        stats_text.config(state=tk.NORMAL)
+        stats_text.delete(1.0, tk.END)
+        stats_text.insert(tk.END, f"Cluster centers:\n{kmeans.cluster_centers_}\n")
+        stats_text.insert(tk.END, f"Labels:\n{kmeans.labels_}\n")
+        stats_text.config(state=tk.DISABLED)
+
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
+
+# Add button for clustering
+
 
 # Main application window
 root = tk.Tk()
@@ -146,24 +284,33 @@ add_files_button = tk.Button(root, text="Add JSON Files", command=add_files)
 remove_files_button = tk.Button(root, text="Remove Selected", command=remove_selected)
 move_up_button = tk.Button(root, text="Move Up", command=move_up)
 move_down_button = tk.Button(root, text="Move Down", command=move_down)
+merge_json_button = tk.Button(root, text="Merge JSON Files", command=merge_json_files_action)
 play_record_button = tk.Button(root, text="Play Selected Actions", command=play_selected_actions)
 start_record_button = tk.Button(root, text="Start Key Logger", command=start_key_logger_with_filename)
 repeated_sequences_button = tk.Button(root, text="Analyze Repeated Sequences", command=analyze_repeated_sequences)
 compare_json_button = tk.Button(root, text="Compare Selected JSON", command=compare_selected_json)
 time_stats_button = tk.Button(root, text="Show Time Statistics", command=display_time_stats)
+shannon_entropy_button = tk.Button(root, text="Calculate Shannon Entropy", command=display_shannon_entropy)
+detailed_sequences_button = tk.Button(root, text="View Repeated Sequences", command=display_repeated_sequences_detailed)
+autocorrelation_button = tk.Button(root, text="Plot Autocorrelation", command=plot_autocorrelation_for_selected)
+clustering_button = tk.Button(root, text="Cluster Coordinates", command=perform_clustering)
+
 
 # Pack the buttons into the window
 add_files_button.pack(pady=5)
 remove_files_button.pack(pady=5)
 move_up_button.pack(pady=5)
 move_down_button.pack(pady=5)
+merge_json_button.pack(pady=5)
 play_record_button.pack(pady=20)
 start_record_button.pack(pady=20)
-compare_json_button.pack(pady=5)
-time_stats_button.pack(pady=5)
-repeated_sequences_button.pack(pady=20)
-
-
+compare_json_button.pack(pady=20)
+time_stats_button.pack(pady=20)
+repeated_sequences_button.pack(pady=5)
+detailed_sequences_button.pack(pady=5)
+shannon_entropy_button.pack(pady=20)
+autocorrelation_button.pack(pady=20)
+clustering_button.pack(pady=20)
 # Create a permanent stats display frame
 create_widgets(root)
 

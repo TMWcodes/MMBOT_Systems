@@ -1,16 +1,96 @@
 from playback_advanced import playActions
 import time
 import os 
+import json
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+from scipy.stats import entropy
 from key_logger import main as start_key_logger
 from tkinter import filedialog, simpledialog
 from data import (
-    load_json, load_coordinates, load_coordinates_from_dicts, combine_json, merge_json_files, 
+    load_json, load_coordinates, load_coordinates_from_dicts, merge_json_files, 
     filter_clicks, compare_clicks, compare_json_files, calculate_time_differences, 
-    compute_statistics, calculate_shannon_entropy, elbow_method, silhouette_scores, 
-    cluster, detect_repetition, detect_repeated_sequences, compute_time_stats, 
-    divide_coordinates, opt_clusters, plot_autocorrelation, flatten_json, unflatten_json, 
-    json_to_csv, compute_time_stats
+    compute_statistics, calculate_shannon_entropy, detect_repetition, detect_repeated_sequences, compute_time_stats, plot_autocorrelation, flatten_json, unflatten_json, 
+    json_to_csv, compute_time_stats, count_repeated_sequences, merge_json_files,
+    
 )
+
+def elbow_method(coordinates, max_clusters):
+    wcss = []
+    for i in range(1, max_clusters + 1):
+        kmeans = KMeans(n_clusters=i, n_init=10, random_state=42)
+        kmeans.fit(coordinates)
+        wcss.append(kmeans.inertia_)
+
+    plt.plot(range(1, max_clusters + 1), wcss, marker="o")
+    plt.title('Elbow Method')
+    plt.xlabel('Number of clusters')
+    plt.ylabel('WCSS')
+    # plt.show()
+
+    first_derivative = np.diff(wcss)
+    second_derivative = np.diff(first_derivative)
+    elbow_point = np.argmax(second_derivative) + 2  # +2 to account for the diff shifting the indices
+    return elbow_point
+
+# Silhouette scores to determine the optimal number of clusters
+def silhouette_scores(coordinates, max_clusters):
+    
+    silhouette_scores = []
+    for i in range(2, max_clusters + 1):
+        kmeans = KMeans(n_clusters=i, n_init=10, random_state=42)
+        kmeans.fit(coordinates)
+        score = silhouette_score(coordinates, kmeans.labels_)
+        silhouette_scores.append(score)
+
+    if silhouette_scores:
+        plt.plot(range(2, max_clusters + 1), silhouette_scores)
+        plt.title('Silhouette Scores')
+        plt.xlabel('Number of clusters')
+        plt.ylabel('Silhouette Score')
+        # plt.show()
+
+        optimal_clusters = np.argmax(silhouette_scores) + 2
+        return optimal_clusters
+    else:
+        return None
+
+def opt_clusters(coordinates):
+     # # Calculate the number of unique points in the coordinates
+    unique_points = len(np.unique(coordinates, axis=0))
+    max_clusters = min(unique_points, 10)
+    if unique_points < 2:
+        print("Not enough unique points to form silhouette clusters.")
+        return None
+    # # Determine the optimal number of clusters using elbow method and silhouette scores
+    optimal_clusters_elbow = elbow_method(coordinates, max_clusters)
+    optimal_clusters_silhouette = silhouette_scores(coordinates, max_clusters)
+    final_clusters = max(optimal_clusters_elbow, optimal_clusters_silhouette)
+    print(f"Optimal clusters (Elbow Method): {optimal_clusters_elbow}")
+    print(f"Optimal clusters (Silhouette Scores): {optimal_clusters_silhouette}")
+    print(f"Final clusters is: {final_clusters}")
+    return final_clusters
+
+# Apply K-Means Clustering
+def cluster(coordinates, n_clusters=3):
+    kmeans = KMeans(n_clusters=n_clusters, n_init=10, random_state=42)
+    kmeans.fit(coordinates)
+    labels = kmeans.labels_
+    centroids = kmeans.cluster_centers_
+
+    # Plotting the results
+    plt.figure(figsize=(10, 6))
+    plt.scatter(coordinates[:, 0], coordinates[:, 1], c=labels, cmap='viridis', marker='o')
+    plt.scatter(centroids[:, 0], centroids[:, 1], s=300, c='red', marker='x')
+    plt.xlabel('X coordinate')
+    plt.ylabel('Y coordinate')
+    plt.title('K-Means Clustering of Coordinates')
+    plt.colorbar(label='Cluster Label')
+    plt.show()
+    
+    return kmeans
 
 
 def run_key_logger(output_filename):
@@ -66,27 +146,66 @@ def get_time_stats(file_path, ignore_moves=True):
         print(f"An error occurred: {e}")
         return None, None, None, None
 
-def get_repeated_sequences(file_path, min_sequence_length=3, min_repetitions=2):
+# def get_repeated_sequences_count(file_path, min_sequence_length=5, min_repetitions=2):
+#     data = load_json(file_path)
+#     coordinates = [event.get('pos') for event in data if event.get('type') == 'click']
+#     return count_repeated_sequences(coordinates, min_sequence_length, min_repetitions)
+
+def get_repeated_sequences_detailed(file_path, repetitions, min_sequence_length=5):
     data = load_json(file_path)
-    coordinates = []
-
-    for event in data:
-        if event.get('type') == 'click':  # Only process 'click' events
-            pos = event.get('pos')
-            if pos and len(pos) == 2:  # Ensure pos has both x and y
-                coordinates.append(tuple(pos))  # Convert list to tuple for hashing
-
-    if not coordinates:
-        raise ValueError("No valid coordinates found in the selected file.")
-
-    repeated_sequences = detect_repeated_sequences(coordinates, min_sequence_length, min_repetitions)
-    return repeated_sequences
-
-
-def process_repeated_sequences(file_path, repetitions):
-    data = load_json(file_path)
-    coordinates = [event['pos'] for event in data if event['type'] == 'click']
+    coordinates = [event.get('pos') for event in data if event.get('type') == 'click']
+    
+    # Duplicate the coordinates for the given number of repetitions
     extended_data = coordinates * repetitions
 
-    # Get the count of repeated sequences
-    return detect_repeated_sequences(extended_data)
+    # Detect detailed repeated sequences
+    repeated_sequences = detect_repeated_sequences(extended_data, min_sequence_length)
+    return repeated_sequences
+
+def process_repeated_sequences(file_path, repetitions, min_sequence_length=5):
+    data = load_json(file_path)
+    coordinates = [event.get('pos') for event in data if event.get('type') == 'click']
+    
+    # Duplicate the coordinates for the given number of repetitions
+    extended_data = coordinates * repetitions
+
+    # Get the count of repeated sequences with fixed min_sequence_length
+    repeated_sequences = detect_repeated_sequences(extended_data, min_sequence_length)
+    return len(repeated_sequences)
+
+def process_shannon_entropy(file_path):
+    data = load_json(file_path)
+    coordinates = [event.get('pos') for event in data if event.get('type') == 'click']
+    return calculate_shannon_entropy(coordinates)
+
+def merge_selected_json_files(filenames, output_filename):
+    try:
+        merged_data = []
+        last_time = 0
+
+        for filename in filenames:
+            with open(filename, 'r') as file:
+                data = json.load(file)
+                
+                # Adjust the time in the current file's data
+                for entry in data:
+                    entry['time'] += last_time
+                
+                merged_data.extend(data)
+                last_time = merged_data[-1]['time']
+
+        # Save the merged data to the output file
+        with open(output_filename, 'w') as outfile:
+            json.dump(merged_data, outfile, indent=2)
+
+        return True
+    except Exception as e:
+        print(f"Error merging files: {e}")
+        return False
+    
+def plot_autocorrelation_from_file(file_path, repetitions):
+    data = load_json(file_path)
+    coordinates = [event.get('pos') for event in data if event.get('type') == 'click']
+    autocorrelation_results = plot_autocorrelation(coordinates, repetitions=repetitions)
+    return autocorrelation_results
+
