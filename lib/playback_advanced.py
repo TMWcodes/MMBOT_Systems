@@ -4,16 +4,7 @@ import os
 import json
 from mouse_movement_1 import move_mouse_with_easing, generate_spline_path, create_bezier_path
 from my_utils import vary_coordinates, check_color
-
-# Function to log click events
-def log_clicks(log_data, coordinates, color, elapsed_time):
-    log_data.append({
-        'time': elapsed_time,
-        'type': 'click',
-        'button': 'Button.left' if pyautogui.position() == coordinates else 'Button.right',
-        'pos': coordinates,
-        'color': color
-    })
+from key_logger import EventType, record_event, check_color
 
 def playActions(filename, path_type='spline', vary_coords=False, variation=0.05):
     script_dir = os.path.dirname(__file__)
@@ -31,15 +22,35 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.05)
             
             elapsed_time = time() - start_time 
             # Perform action
-            if action['type'] == 'keyDown':
+            if action['type'] == EventType.KEYDOWN:
                 key = convertKey(action['button'])
                 pyautogui.keyDown(key)
-                print("keyDown on {}". format(action['button']))
-            elif action['type'] == 'keyUp':
+                print(f"keyDown on {action['button']}")
+
+                # Log keyDown event
+                log_data.append({
+                    'time': elapsed_time,
+                    'type': EventType.KEYDOWN,
+                    'button': action['button'],
+                    'pos': None,
+                    'color': None
+                })
+
+            elif action['type'] == EventType.KEYUP:
                 key = convertKey(action['button'])
                 pyautogui.keyUp(key)
-                print("keyUp on {}". format(action['button']))
-            elif action['type'] == 'move' or action['type'] == 'click':
+                print(f"keyUp on {action['button']}")
+
+                # Log keyUp event
+                log_data.append({
+                    'time': elapsed_time,
+                    'type': EventType.KEYUP,
+                    'button': action['button'],
+                    'pos': None,
+                    'color': None
+                })
+
+            elif action['type'] == EventType.MOVE or action['type'] == EventType.CLICK:
                 current_pos = pyautogui.position()
                 target_pos = (action['pos'][0], action['pos'][1])
 
@@ -56,7 +67,6 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.05)
                 if not isinstance(x, int) or not isinstance(y, int):
                     raise ValueError("Both elements of target_pos must be integers")
 
-
                 if path_type == 'spline':
                     points = generate_spline_path(current_pos, target_pos)
                     print(f"moving to {target_pos}")
@@ -66,11 +76,17 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.05)
                     print(f"moving to {target_pos}")
                     for point in path:
                         pyautogui.moveTo(point[0], point[1], duration=0.1, tween=pyautogui.easeInQuad)
-                if action['type'] == 'click':
-                    # Log click event
+                
+                if action['type'] == EventType.CLICK:
                     color = check_color(target_pos)
-                    log_clicks(log_data, target_pos, color, elapsed_time)
-
+                    # Log click event
+                    log_data.append({
+                        'time': elapsed_time,
+                        'type': EventType.CLICK,
+                        'button': action['button'],
+                        'pos': target_pos,
+                        'color': color
+                    })
                     pyautogui.click(target_pos[0], target_pos[1], button='left' if action['button'] == 'Button.left' else 'right', duration=0.25)
                     print(f"{action['button']} click on {action['pos']}")
             
@@ -89,19 +105,11 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.05)
             print("sleeping for {}".format(elapsed_time))
             sleep(elapsed_time)
     
-    
     # Save logged data to a new JSON file in the log_records folder with a single .json extension
-    # print(f"script_dir: {script_dir}")
-
     log_dir = os.path.join(script_dir, 'log_records')
     os.makedirs(log_dir, exist_ok=True)  # Create the log_records directory if it doesn't exist
-    # print(f"log_dir: {log_dir}")
     base_filename = os.path.splitext(os.path.basename(filename))[0]
-    # print(f"base filename: {base_filename}")
     log_record_path = os.path.join(log_dir, f'{base_filename}_log.json')
-    # If the log file already exists, find a new filename
-    # print(f"log record path is: {log_record_path}")
-    
 
     if os.path.exists(log_record_path):
         i = 1
