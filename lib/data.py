@@ -77,64 +77,86 @@ def merge_json_files(filenames, output_file_name='merged_file.json'):
     return merged_actions
 
 def filter_clicks(events):
-    clicks = [event for event in events if event.get('type') == 'click']
-    return clicks
+    # Filter out all non-click events
+    return [event for event in events if event.get('type') == 'click']
 
-def compare_clicks(file1, file2):
+def compare_clicks(file1, file2, compare_time=True, compare_color=True, compare_position=True):
     if len(file1) != len(file2):
-        print(f"Files have different number of click entries: {len(file1)} vs {len(file2)}")
-        return
+        return f"Files have different number of click entries: {len(file1)} vs {len(file2)}\n"
 
     differences = []
     for i, (entry1, entry2) in enumerate(zip(file1, file2)):
-        pos1, color1 = entry1['pos'], entry1['color']
-        pos2, color2 = entry2['pos'], entry2['color']
-        
-        if pos1 != pos2 or color1 != color2:
+        pos1, color1, time1 = entry1.get('pos'), entry1.get('color'), entry1.get('time')
+        pos2, color2, time2 = entry2.get('pos'), entry2.get('color'), entry2.get('time')
+
+        pos_diff = pos1 != pos2 if compare_position else False
+        color_diff = color1 != color2 if compare_color else False
+        time_diff = time1 != time2 if compare_time else False
+
+        if pos_diff or color_diff or time_diff:
             differences.append({
                 'index': i,
-                'file1': {'pos': pos1, 'color': color1},
-                'file2': {'pos': pos2, 'color': color2}
+                'file1': {'pos': pos1, 'color': color1, 'time': time1},
+                'file2': {'pos': pos2, 'color': color2, 'time': time2}
             })
 
     if differences:
-        print(f"Differences found in {len(differences)} entries:")
+        result = f"Differences found in {len(differences)} entries:\n"
         for diff in differences:
-            print(f"Index {diff['index']}:")
-            print(f"  File 1 - Pos: {diff['file1']['pos']}, Color: {diff['file1']['color']}")
-            print(f"  File 2 - Pos: {diff['file2']['pos']}, Color: {diff['file2']['color']}")
+            result += f"Index {diff['index']}:\n"
+            if compare_time:
+                result += f"  File 1 - Time: {diff['file1']['time']}\n"
+                result += f"  File 2 - Time: {diff['file2']['time']}\n"
+            if compare_position:
+                result += f"  File 1 - Pos: {diff['file1']['pos']}\n"
+                result += f"  File 2 - Pos: {diff['file2']['pos']}\n"
+            if compare_color:
+                result += f"  File 1 - Color: {diff['file1']['color']}\n"
+                result += f"  File 2 - Color: {diff['file2']['color']}\n"
+        return result
     else:
-        print("No differences found")
-        
-def compare_json_files(file1, file2):
+        return "No differences found\n"
+
+def compare_json_files(file1, file2, compare_time=True, compare_color=True, compare_position=True):
     data1 = load_json(file1)
     data2 = load_json(file2)
     
     if len(data1) != len(data2):
-        print(f"Files have different number of entries: {len(data1)} vs {len(data2)}")
-        return
+        return f"Files have different number of entries: {len(data1)} vs {len(data2)}"
 
     differences = []
     for i, (entry1, entry2) in enumerate(zip(data1, data2)):
-        pos1, color1 = entry1['pos'], entry1['color']
-        pos2, color2 = entry2['pos'], entry2['color']
-        
-        if pos1 != pos2 or color1 != color2:
+        pos1, color1, time1 = entry1.get('pos'), entry1.get('color'), entry1.get('time')
+        pos2, color2, time2 = entry2.get('pos'), entry2.get('color'), entry2.get('time')
+
+        pos_diff = pos1 != pos2 if compare_position else False
+        color_diff = color1 != color2 if compare_color else False
+        time_diff = time1 != time2 if compare_time else False
+
+        if pos_diff or color_diff or time_diff:
             differences.append({
                 'index': i,
-                'file1': {'pos': pos1, 'color': color1},
-                'file2': {'pos': pos2, 'color': color2}
+                'file1': {'pos': pos1, 'color': color1, 'time': time1},
+                'file2': {'pos': pos2, 'color': color2, 'time': time2}
             })
 
     if differences:
-        print(f"Differences found in {len(differences)} entries:")
+        result = f"Differences found in {len(differences)} entries:\n"
         for diff in differences:
-            print(f"Index {diff['index']}:")
-            print(f"  File 1 - Pos: {diff['file1']['pos']}, Color: {diff['file1']['color']}")
-            print(f"  File 2 - Pos: {diff['file2']['pos']}, Color: {diff['file2']['color']}")
+            result += f"Index {diff['index']}:\n"
+            if compare_time:
+                result += f"  File 1 - Time: {diff['file1']['time']}\n"
+                result += f"  File 2 - Time: {diff['file2']['time']}\n"
+            if compare_position:
+                result += f"  File 1 - Pos: {diff['file1']['pos']}\n"
+                result += f"  File 2 - Pos: {diff['file2']['pos']}\n"
+            if compare_color:
+                result += f"  File 1 - Color: {diff['file1']['color']}\n"
+                result += f"  File 2 - Color: {diff['file2']['color']}\n"
     else:
-        print("No differences found")
-        
+        result = "No differences found"
+
+    return result
 # Calculate time differences between consecutive events with an option to ignore move actions
 def calculate_time_differences(events, ignore_moves=False):
     time_diffs = []

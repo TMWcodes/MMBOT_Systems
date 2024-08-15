@@ -8,7 +8,6 @@ from controller import (
     process_repeated_sequences, process_shannon_entropy,
     get_repeated_sequences_detailed, merge_selected_json_files, plot_autocorrelation_from_file,
     cluster, opt_clusters
-
 )
 import numpy as np
 
@@ -47,7 +46,6 @@ def move_down():
         if index < len(new_items) - 1:
             file_listbox.selection_set(index + 1)
 
-# New function to play selected actions
 def play_selected_actions():
     filenames = file_listbox.get(0, tk.END)
     if not filenames:
@@ -57,8 +55,7 @@ def play_selected_actions():
     play_files_sequentially(filenames, **config)
     print("All actions have been played.")
 
-# New function to compare selected JSON files
-def compare_selected_json(filtered=True):
+def compare_selected_json():
     selected_files = file_listbox.curselection()
     if len(selected_files) == 2:
         file1 = file_listbox.get(selected_files[0])
@@ -67,20 +64,49 @@ def compare_selected_json(filtered=True):
         # Load JSON data from the selected files
         data1 = load_json(file1)
         data2 = load_json(file2)
-        
-        if filtered:  # If filter is true
-            # Filter out only click entries
-            data1 = filter_clicks(data1)
-            data2 = filter_clicks(data2)
 
-        # Compare the data
-        if filtered:
-            result = compare_clicks(data1, data2)
-        else:
-            result = compare_json_files(file1, file2)
-        return result
+        # Filter to only include click entries
+        data1 = filter_clicks(data1)
+        data2 = filter_clicks(data2)
+
+        # Get comparison options
+        compare_time_opt = time_var.get()
+        compare_pos_opt = pos_var.get()
+        compare_color_opt = color_var.get()
+
+        differences = []
+
+        for index, (entry1, entry2) in enumerate(zip(data1, data2)):
+            diffs_file1 = []
+            diffs_file2 = []
+            
+            if compare_time_opt and entry1['time'] != entry2['time']:
+                diffs_file1.append(f"Time: {entry1['time']}")
+                diffs_file2.append(f"Time: {entry2['time']}")
+            
+            if compare_pos_opt and entry1['pos'] != entry2['pos']:
+                diffs_file1.append(f"Pos: {entry1['pos']}")
+                diffs_file2.append(f"Pos: {entry2['pos']}")
+            
+            if compare_color_opt and entry1['color'] != entry2['color']:
+                diffs_file1.append(f"Color: {entry1['color']}")
+                diffs_file2.append(f"Color: {entry2['color']}")
+            
+            if diffs_file1 or diffs_file2:
+                differences.append(f"Index {index}:\n  File 1 - {', '.join(diffs_file1)}\n  File 2 - {', '.join(diffs_file2)}")
+
+        num_differences = len(differences)
+        result_summary = f"Differences found in {num_differences} entries:\n\n"
+        result_details = "\n".join(differences) if differences else "No differences found."
+
+        # Update the stats display window
+        stats_text.config(state=tk.NORMAL)
+        stats_text.delete(1.0, tk.END)
+        stats_text.insert(tk.END, result_summary + result_details + "\n")
+        stats_text.config(state=tk.DISABLED)
+
     else:
-        print("Please select exactly 2 files to compare.")
+        messagebox.showerror("Error", "Please select exactly 2 files to compare.")
 
 def display_time_stats():
     selected_files = file_listbox.curselection()
@@ -110,12 +136,6 @@ def display_time_stats():
 
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
-
-# Create widgets and layout
-def create_widgets(root):
-    global stats_text
-    stats_text = tk.Text(root, width=50, height=10, state=tk.DISABLED)
-    stats_text.pack(pady=10)
 
 def analyze_repeated_sequences():
     selected_files = file_listbox.curselection()
@@ -185,7 +205,6 @@ def display_shannon_entropy():
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
 
-
 def merge_json_files_action():
     # Get selected files from the listbox
     selected_files = file_listbox.curselection()
@@ -232,7 +251,6 @@ def plot_autocorrelation_for_selected():
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
 
-
 def perform_clustering():
     selected_files = file_listbox.curselection()
     if len(selected_files) != 1:
@@ -270,8 +288,6 @@ def perform_clustering():
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
 
-
-# mouses scrolling
 def on_mouse_wheel(event):
     # Scroll up or down depending on the mouse wheel movement
     canvas.yview_scroll(int(-1*(event.delta/120)), "units")
@@ -280,11 +296,14 @@ def on_mouse_wheel(event):
 root = tk.Tk()
 root.title("Dashboard")
 
-canvas = tk.Canvas(root)
-scrollbar = ttk.Scrollbar(root, orient="vertical", command=canvas.yview)
+# Create a frame for the left side (file list and buttons)
+left_frame = tk.Frame(root)
+left_frame.pack(side="left", fill="both", expand=True)
+
+canvas = tk.Canvas(left_frame)
+scrollbar = ttk.Scrollbar(left_frame, orient="vertical", command=canvas.yview)
 scrollable_frame = ttk.Frame(canvas)
 
-# Configure scrollable frame
 def on_frame_configure(event):
     canvas.configure(scrollregion=canvas.bbox("all"))
 
@@ -296,8 +315,7 @@ canvas.pack(side="left", fill="both", expand=True)
 scrollbar.pack(side="right", fill="y")
 canvas.configure(yscrollcommand=scrollbar.set)
 
-root.bind_all("<MouseWheel>", on_mouse_wheel)  # For Windows and macOS
-
+root.bind_all("<MouseWheel>", on_mouse_wheel)
 
 # File Listbox
 file_listbox = tk.Listbox(scrollable_frame, selectmode=tk.MULTIPLE, width=100, height=15)
@@ -335,7 +353,32 @@ shannon_entropy_button.pack(pady=20)
 autocorrelation_button.pack(pady=20)
 clustering_button.pack(pady=20)
 
-# Create a permanent stats display frame
-create_widgets(root)
+# Create a frame for the display area (right side)
+right_frame = tk.Frame(root)
+right_frame.pack(side="right", fill="both", expand=True)
 
+# Create a Text widget for displaying stats (read-only mode)
+stats_text = tk.Text(right_frame, wrap=tk.WORD, state=tk.DISABLED)
+stats_text.pack(side="left", fill="both", expand=True)
+
+# Create a scrollbar for the Text widget
+text_scrollbar = ttk.Scrollbar(right_frame, orient="vertical", command=stats_text.yview)
+text_scrollbar.pack(side="right", fill="y")
+
+# Configure the Text widget to use the scrollbar
+stats_text.configure(yscrollcommand=text_scrollbar.set)
+
+# Create checkboxes for comparison options
+comparison_frame = tk.LabelFrame(left_frame, text="Comparison Options", padx=10, pady=10)
+comparison_frame.pack(pady=10)
+
+time_var = tk.BooleanVar(value=True)
+color_var = tk.BooleanVar(value=False)
+pos_var = tk.BooleanVar(value=False)
+
+tk.Checkbutton(comparison_frame, text="Compare Time", variable=time_var).pack(anchor="w")
+tk.Checkbutton(comparison_frame, text="Compare Color", variable=color_var).pack(anchor="w")
+tk.Checkbutton(comparison_frame, text="Compare Position", variable=pos_var).pack(anchor="w")
+
+# Running the main application loop
 root.mainloop()
