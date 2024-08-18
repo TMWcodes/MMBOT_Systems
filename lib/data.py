@@ -77,54 +77,11 @@ def merge_json_files(filenames, output_file_name='merged_file.json'):
     return merged_actions
 
 def filter_clicks(events):
-    # Filter out all non-click events
     return [event for event in events if event.get('type') == 'click']
 
-def compare_clicks(file1, file2, compare_time=True, compare_color=True, compare_position=True):
-    if len(file1) != len(file2):
-        return f"Files have different number of click entries: {len(file1)} vs {len(file2)}\n"
-
+def compare_entries(data1, data2, compare_time=False, compare_color=True, compare_position=True):
     differences = []
-    for i, (entry1, entry2) in enumerate(zip(file1, file2)):
-        pos1, color1, time1 = entry1.get('pos'), entry1.get('color'), entry1.get('time')
-        pos2, color2, time2 = entry2.get('pos'), entry2.get('color'), entry2.get('time')
-
-        pos_diff = pos1 != pos2 if compare_position else False
-        color_diff = color1 != color2 if compare_color else False
-        time_diff = time1 != time2 if compare_time else False
-
-        if pos_diff or color_diff or time_diff:
-            differences.append({
-                'index': i,
-                'file1': {'pos': pos1, 'color': color1, 'time': time1},
-                'file2': {'pos': pos2, 'color': color2, 'time': time2}
-            })
-
-    if differences:
-        result = f"Differences found in {len(differences)} entries:\n"
-        for diff in differences:
-            result += f"Index {diff['index']}:\n"
-            if compare_time:
-                result += f"  File 1 - Time: {diff['file1']['time']}\n"
-                result += f"  File 2 - Time: {diff['file2']['time']}\n"
-            if compare_position:
-                result += f"  File 1 - Pos: {diff['file1']['pos']}\n"
-                result += f"  File 2 - Pos: {diff['file2']['pos']}\n"
-            if compare_color:
-                result += f"  File 1 - Color: {diff['file1']['color']}\n"
-                result += f"  File 2 - Color: {diff['file2']['color']}\n"
-        return result
-    else:
-        return "No differences found\n"
-
-def compare_json_files(file1, file2, compare_time=True, compare_color=True, compare_position=True):
-    data1 = load_json(file1)
-    data2 = load_json(file2)
     
-    if len(data1) != len(data2):
-        return f"Files have different number of entries: {len(data1)} vs {len(data2)}"
-
-    differences = []
     for i, (entry1, entry2) in enumerate(zip(data1, data2)):
         pos1, color1, time1 = entry1.get('pos'), entry1.get('color'), entry1.get('time')
         pos2, color2, time2 = entry2.get('pos'), entry2.get('color'), entry2.get('time')
@@ -134,29 +91,22 @@ def compare_json_files(file1, file2, compare_time=True, compare_color=True, comp
         time_diff = time1 != time2 if compare_time else False
 
         if pos_diff or color_diff or time_diff:
-            differences.append({
-                'index': i,
-                'file1': {'pos': pos1, 'color': color1, 'time': time1},
-                'file2': {'pos': pos2, 'color': color2, 'time': time2}
-            })
+            diffs_file1 = []
+            diffs_file2 = []
 
-    if differences:
-        result = f"Differences found in {len(differences)} entries:\n"
-        for diff in differences:
-            result += f"Index {diff['index']}:\n"
-            if compare_time:
-                result += f"  File 1 - Time: {diff['file1']['time']}\n"
-                result += f"  File 2 - Time: {diff['file2']['time']}\n"
-            if compare_position:
-                result += f"  File 1 - Pos: {diff['file1']['pos']}\n"
-                result += f"  File 2 - Pos: {diff['file2']['pos']}\n"
-            if compare_color:
-                result += f"  File 1 - Color: {diff['file1']['color']}\n"
-                result += f"  File 2 - Color: {diff['file2']['color']}\n"
-    else:
-        result = "No differences found"
+            if compare_time and time_diff:
+                diffs_file1.append(f"Time: {time1}")
+                diffs_file2.append(f"Time: {time2}")
+            if compare_position and pos_diff:
+                diffs_file1.append(f"Pos: {pos1}")
+                diffs_file2.append(f"Pos: {pos2}")
+            if compare_color and color_diff:
+                diffs_file1.append(f"Color: {color1}")
+                diffs_file2.append(f"Color: {color2}")
 
-    return result
+            differences.append(f"Index {i}:\n  File 1 - {', '.join(diffs_file1)}\n  File 2 - {', '.join(diffs_file2)}")
+
+    return differences
 # Calculate time differences between consecutive events with an option to ignore move actions
 def calculate_time_differences(events, ignore_moves=False):
     time_diffs = []
@@ -270,23 +220,22 @@ def plot_autocorrelation(sequence, repetitions, figsize=(12, 6), max_lag=50):
     
     # Repeat the sequence to simulate multiple repetitions
     sequence_repeated = np.tile(sequence, (repetitions, 1))
-    # print("Repeated Sequence:\n", sequence_repeated) # debug
     
     # Compute multidimensional autocorrelation
     acf = multidimensional_autocorrelation(sequence_repeated)
     
     # Calculate a simple metric, such as the mean of the first few lags
-    autocorr_metric = np.mean(acf[:len(sequence)])
-    autocorr_metric = autocorr_metric * 1000
+    autocorr_metric = np.mean(acf[:len(sequence)]) * 1000
     
-    # Plotting the autocorrelation with custom figure size
-    plt.figure(figsize=figsize)  # Set figure size
-    lags = range(min(len(acf), max_lag))
-    plt.stem(lags, acf[:max_lag], linefmt='-', markerfmt='o', basefmt=' ')
-    plt.xlabel('Lag')
-    plt.ylabel('Autocorrelation')
-    plt.title(f'Multidimensional Autocorrelation of Coordinate Pairs (Repeated {repetitions} times)')
-    # plt.show()
+    # Plot the autocorrelation with custom figure size
+    # plt.figure(figsize=figsize)  # Create a new figure
+    # lags = range(min(len(acf), max_lag))
+    # plt.stem(lags, acf[:max_lag], linefmt='-', markerfmt='o', basefmt=' ')
+    # plt.xlabel('Lag')
+    # plt.ylabel('Autocorrelation')
+    # plt.title(f'Multidimensional Autocorrelation of Coordinate Pairs (Repeated {repetitions} times)')
+    # plt.show()  # Display the plot
+    # plt.close()  # Close the figure to prevent empty windows
     
     print(f"Autocorrelation metric for {repetitions} repetitions: {autocorr_metric}")
 

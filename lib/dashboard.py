@@ -4,10 +4,10 @@ from tkinter import filedialog, messagebox, simpledialog
 from controller import (
     select_files, remove_items_from_list, move_item_up, move_item_down,
     play_files_sequentially, start_key_logger_with_filename, get_playback_config,
-    filter_clicks, compare_json_files, compare_clicks, load_json, get_time_stats, 
+    filter_clicks, load_json, get_time_stats, 
     process_repeated_sequences, process_shannon_entropy,
     get_repeated_sequences_detailed, merge_selected_json_files, plot_autocorrelation_from_file,
-    cluster, opt_clusters
+    cluster, opt_clusters, compare_entries
 )
 import numpy as np
 
@@ -61,50 +61,34 @@ def compare_selected_json():
         file1 = file_listbox.get(selected_files[0])
         file2 = file_listbox.get(selected_files[1])
 
-        # Load JSON data from the selected files
-        data1 = load_json(file1)
-        data2 = load_json(file2)
-
-        # Filter to only include click entries
-        data1 = filter_clicks(data1)
-        data2 = filter_clicks(data2)
-
-        # Get comparison options
-        compare_time_opt = time_var.get()
-        compare_pos_opt = pos_var.get()
-        compare_color_opt = color_var.get()
-
-        differences = []
-
-        for index, (entry1, entry2) in enumerate(zip(data1, data2)):
-            diffs_file1 = []
-            diffs_file2 = []
+        try:
+            # Load JSON data from the selected files
+            data1 = load_json(file1)
+            data2 = load_json(file2)
             
-            if compare_time_opt and entry1['time'] != entry2['time']:
-                diffs_file1.append(f"Time: {entry1['time']}")
-                diffs_file2.append(f"Time: {entry2['time']}")
-            
-            if compare_pos_opt and entry1['pos'] != entry2['pos']:
-                diffs_file1.append(f"Pos: {entry1['pos']}")
-                diffs_file2.append(f"Pos: {entry2['pos']}")
-            
-            if compare_color_opt and entry1['color'] != entry2['color']:
-                diffs_file1.append(f"Color: {entry1['color']}")
-                diffs_file2.append(f"Color: {entry2['color']}")
-            
-            if diffs_file1 or diffs_file2:
-                differences.append(f"Index {index}:\n  File 1 - {', '.join(diffs_file1)}\n  File 2 - {', '.join(diffs_file2)}")
+            # Apply filtering by default
+            data1 = filter_clicks(data1)
+            data2 = filter_clicks(data2)
 
-        num_differences = len(differences)
-        result_summary = f"Differences found in {num_differences} entries:\n\n"
-        result_details = "\n".join(differences) if differences else "No differences found."
+            # Check for discrepancies in number of entries
+            if len(data1) != len(data2):
+                messagebox.showinfo("Warning", f"Files have different number of entries: {len(data1)} vs {len(data2)}")
 
-        # Update the stats display window
-        stats_text.config(state=tk.NORMAL)
-        stats_text.delete(1.0, tk.END)
-        stats_text.insert(tk.END, result_summary + result_details + "\n")
-        stats_text.config(state=tk.DISABLED)
+            # Compare the entries
+            differences = compare_entries(data1, data2, compare_time=time_var.get(), compare_color=color_var.get(), compare_position=pos_var.get())
+            
+            num_differences = len(differences)
+            result_summary = f"Differences found in {num_differences} entries:\n\n"
+            result_details = "\n".join(differences) if differences else "No differences found."
 
+            # Update the stats display window
+            stats_text.config(state=tk.NORMAL)
+            stats_text.delete(1.0, tk.END)
+            stats_text.insert(tk.END, result_summary + result_details + "\n")
+            stats_text.config(state=tk.DISABLED)
+            
+        except FileNotFoundError:
+            messagebox.showerror("Error", "One or both files not found.")
     else:
         messagebox.showerror("Error", "Please select exactly 2 files to compare.")
 
@@ -240,13 +224,13 @@ def plot_autocorrelation_for_selected():
         return
 
     try:
-        autocorrelation_results = plot_autocorrelation_from_file(file_path, repetitions)
+        autocorrelation_metric = plot_autocorrelation_from_file(file_path, repetitions)
         
         # Display the results in the stats text box
         stats_text.config(state=tk.NORMAL)
         stats_text.delete(1.0, tk.END)
         stats_text.insert(tk.END, f"Autocorrelation Results for {file_path} with {repetitions} repetitions:\n")
-        stats_text.insert(tk.END, autocorrelation_results)
+        stats_text.insert(tk.END, f"Autocorrelation Metric: {autocorrelation_metric:.2f}\n")
         stats_text.config(state=tk.DISABLED)
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
@@ -266,12 +250,12 @@ def perform_clustering():
         data = load_json(file_path)
         coordinates = np.array([event.get('pos') for event in data if event.get('type') == 'click'])
 
-        if n_clusters is None:  # User clicked cancel or left it blank
+        if n_clusters is None:
             n_clusters = opt_clusters(coordinates)
             if n_clusters is None:
                 messagebox.showerror("Error", "Could not determine optimal number of clusters.")
                 return
-        elif n_clusters < 1:  # Handle invalid input for clusters
+        elif n_clusters < 1:
             messagebox.showerror("Error", "Number of clusters must be at least 1.")
             return
 
@@ -372,7 +356,7 @@ stats_text.configure(yscrollcommand=text_scrollbar.set)
 comparison_frame = tk.LabelFrame(left_frame, text="Comparison Options", padx=10, pady=10)
 comparison_frame.pack(pady=10)
 
-time_var = tk.BooleanVar(value=True)
+time_var = tk.BooleanVar(value=False)
 color_var = tk.BooleanVar(value=False)
 pos_var = tk.BooleanVar(value=False)
 

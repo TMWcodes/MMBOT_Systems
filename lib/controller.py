@@ -11,7 +11,7 @@ from key_logger import main as start_key_logger
 from tkinter import filedialog, simpledialog
 from data import (
     load_json, load_coordinates, load_coordinates_from_dicts, merge_json_files, 
-    filter_clicks, compare_clicks, compare_json_files, calculate_time_differences, 
+    filter_clicks, compare_entries, calculate_time_differences, 
     compute_statistics, calculate_shannon_entropy, detect_repetition, detect_repeated_sequences, compute_time_stats, plot_autocorrelation, flatten_json, unflatten_json, 
     json_to_csv, compute_time_stats, count_repeated_sequences, merge_json_files,
     
@@ -81,14 +81,15 @@ def cluster(coordinates, n_clusters=3):
     centroids = kmeans.cluster_centers_
 
     # Plotting the results
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(10, 6))  # Create a new figure
     plt.scatter(coordinates[:, 0], coordinates[:, 1], c=labels, cmap='viridis', marker='o')
     plt.scatter(centroids[:, 0], centroids[:, 1], s=300, c='red', marker='x')
     plt.xlabel('X coordinate')
     plt.ylabel('Y coordinate')
     plt.title('K-Means Clustering of Coordinates')
     plt.colorbar(label='Cluster Label')
-    plt.show()
+    plt.show()  # Display the plot
+    plt.close()  # Close the figure to prevent empty windows
     
     return kmeans
 
@@ -104,7 +105,12 @@ def start_key_logger_with_filename():
 def select_files():
     recordings_dir = os.path.join(os.path.dirname(__file__), 'recordings')
     filetypes = [("JSON files", "*.json"), ("All files", "*.*")]
-    return filedialog.askopenfilenames(title="Select JSON files", initialdir=recordings_dir, filetypes=filetypes)
+    filenames = filedialog.askopenfilenames(title="Select JSON files", initialdir=recordings_dir, filetypes=filetypes)
+
+    # Shorten the file paths to just the file names or relative paths
+    short_filenames = [os.path.basename(filepath) for filepath in filenames]
+    
+    return short_filenames
 
 def remove_items_from_list(items, indices):
     for index in reversed(indices):
