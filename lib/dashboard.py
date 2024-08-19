@@ -78,7 +78,9 @@ def compare_selected_json():
             differences = compare_entries(data1, data2, compare_time=time_var.get(), compare_color=color_var.get(), compare_position=pos_var.get())
             
             num_differences = len(differences)
-            result_summary = f"Differences found in {num_differences} entries:\n\n"
+            
+            # Adding file names to the output
+            result_summary = f"File 1 is {file1}\nFile 2 is {file2}\n\nDifferences found in {num_differences} entries:\n\n"
             result_details = "\n".join(differences) if differences else "No differences found."
 
             # Update the stats display window
