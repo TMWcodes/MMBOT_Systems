@@ -11,6 +11,7 @@ from controller import (
 )
 import numpy as np
 
+import os
 def add_files():
     filenames = select_files()
     for filename in filenames:
@@ -50,9 +51,27 @@ def play_selected_actions():
     filenames = file_listbox.get(0, tk.END)
     if not filenames:
         return
-    
+
     config = get_playback_config()
-    play_files_sequentially(filenames, **config)
+    
+    # Assume the files could be from either `recordings` or `log_records`
+    # Append directory paths based on file naming conventions or user selection
+    base_dirs = ['recordings', 'log_records']
+    full_paths = []
+
+    for filename in filenames:
+        for base_dir in base_dirs:
+            # Check if the file exists in one of the directories
+            potential_path = f"{base_dir}/{filename}"
+            if os.path.exists(potential_path):  # Use a quick check here; you may need to adjust this
+                full_paths.append(potential_path)
+                break
+        else:
+            # If file is not found in the base directories, show an error
+            messagebox.showerror("Error", f"File not found in any of the expected directories: {filename}")
+            return
+
+    play_files_sequentially(full_paths, **config)
     print("All actions have been played.")
 
 def compare_selected_json():

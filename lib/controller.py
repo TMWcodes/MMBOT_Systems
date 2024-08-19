@@ -129,16 +129,17 @@ def move_item_down(items, selected_indices):
             items[index], items[index + 1] = items[index + 1], items[index]
     return items
 
-def play_files_sequentially(filenames, path_type, vary_coords, variation, delay, loop_reps):
+def play_files_sequentially(filenames, path_type, vary_coords, variation, delay, loop_reps, ignore_move_actions):
     for _ in range(loop_reps):
         for filename in filenames:
-            playActions(filename, path_type=path_type, vary_coords=vary_coords, variation=variation)
+            playActions(filename, path_type=path_type, vary_coords=vary_coords, variation=variation, ignore_move_actions=ignore_move_actions)
             time.sleep(delay)
 ## new
 def get_playback_config():
     config = {
         'path_type': simpledialog.askstring("Input", "Enter path type:", initialvalue='spline'),
-        'vary_coords': simpledialog.askstring("Input", "Vary coordinates? (yes/no)", initialvalue='yes').lower() in ['yes', 'true', '1']
+        'vary_coords': simpledialog.askstring("Input", "Vary coordinates? (yes/no)", initialvalue='yes').lower() in ['yes', 'true', '1'],
+        'ignore_move_actions': simpledialog.askstring("Input", "Ignore move actions? (yes/no)", initialvalue='no').lower() in ['yes', 'true', '1']
     }
     
     # Only prompt for variation if vary_coords is True
