@@ -138,11 +138,24 @@ def play_files_sequentially(filenames, path_type, vary_coords, variation, delay,
 def get_playback_config():
     config = {
         'path_type': simpledialog.askstring("Input", "Enter path type:", initialvalue='spline'),
-        'vary_coords': simpledialog.askstring("Input", "Vary coordinates? (yes/no)", initialvalue='yes').lower() in ['yes', 'true', '1'],
-        'variation': simpledialog.askfloat("Input", "Enter variation:", initialvalue=0.05),
-        'delay': simpledialog.askfloat("Input", "Enter delay between actions:", initialvalue=2),
-        'loop_reps': simpledialog.askinteger("Input", "Enter number of times to loop:", initialvalue=1)
+        'vary_coords': simpledialog.askstring("Input", "Vary coordinates? (yes/no)", initialvalue='yes').lower() in ['yes', 'true', '1']
     }
+    
+    # Only prompt for variation if vary_coords is True
+    if config['vary_coords']:
+        config['variation'] = simpledialog.askfloat("Input", "Enter variation:", initialvalue=0.05)
+    else:
+        config['variation'] = 0.0
+
+    # Ask for loop repetitions
+    config['loop_reps'] = simpledialog.askinteger("Input", "Enter number of times to loop:", initialvalue=1)
+
+    # Only prompt for delay if loop_reps is greater than 1
+    if config['loop_reps'] > 1:
+        config['delay'] = simpledialog.askfloat("Input", "Enter delay between actions:", initialvalue=2)
+    else:
+        config['delay'] = 0.0  # Set delay to 0.0 if not looping
+    
     return config
 ##
 def get_time_stats(file_path, ignore_moves=True):

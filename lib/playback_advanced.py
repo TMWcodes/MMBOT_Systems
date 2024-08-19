@@ -4,9 +4,9 @@ import os
 import json
 from mouse_movement_1 import move_mouse_with_easing, generate_spline_path, create_bezier_path
 from my_utils import vary_coordinates, check_color
-from key_logger import EventType, record_event, check_color
+from key_logger import EventType
 
-def playActions(filename, path_type='spline', vary_coords=False, variation=0.05):
+def playActions(filename, path_type='spline', vary_coords=False, variation=0.01):
     script_dir = os.path.dirname(__file__)
     file_path = os.path.join(script_dir, 'recordings', filename)
     print(f"file_path is {file_path}")
