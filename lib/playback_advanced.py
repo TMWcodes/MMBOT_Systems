@@ -13,21 +13,25 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
     print(f"file_path is {file_path}")
 
     log_data = []
-    start_time = time() 
+    start_time = time()
+    
+    # Initialize the playback start time
+    playback_start_time = time()
 
     try:
         with open(file_path, "r") as jsonfile:
             data = json.load(jsonfile)
-            
+
             for index, action in enumerate(data):
                 if ignore_move_actions and action['type'] == EventType.MOVE:
                     continue
 
-                action_start_time = time()
                 if action['button'] == 'Key.esc':
                     break
                 
-                elapsed_time = time() - start_time 
+                # Calculate elapsed time since playback started
+                actual_elapsed_total = time() - playback_start_time
+                
                 # Perform action
                 if action['type'] == EventType.KEYDOWN:
                     key = convertKey(action['button'])
@@ -36,7 +40,7 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
 
                     # Log keyDown event
                     log_data.append({
-                        'time': elapsed_time,
+                        'time': actual_elapsed_total,
                         'type': EventType.KEYDOWN,
                         'button': action['button'],
                         'pos': None,
@@ -50,7 +54,7 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
 
                     # Log keyUp event
                     log_data.append({
-                        'time': elapsed_time,
+                        'time': actual_elapsed_total,
                         'type': EventType.KEYUP,
                         'button': action['button'],
                         'pos': None,
@@ -66,13 +70,6 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
                         x_var, y_var = vary_coordinates(target_pos[0], target_pos[1], variation)
                         target_pos = (target_pos[0] + x_var, target_pos[1] + y_var)
 
-                    if not isinstance(target_pos, (tuple, list)) or len(target_pos) != 2:
-                        raise ValueError("target_pos must be a tuple or list of two integers")
-                    
-                    x, y = target_pos
-                    if not isinstance(x, int) or not isinstance(y, int):
-                        raise ValueError("Both elements of target_pos must be integers")
-
                     if path_type == 'spline':
                         points = generate_spline_path(current_pos, target_pos)
                         move_mouse_with_easing(zip(*(i.astype(int) for i in points)), duration=0.1, easing_function=pyautogui.easeInOutQuad)
@@ -87,7 +84,7 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
                         color = check_color(target_pos)
                         # Log click event
                         log_data.append({
-                            'time': elapsed_time,
+                            'time': actual_elapsed_total,
                             'type': EventType.CLICK,
                             'button': action['button'],
                             'pos': target_pos,
@@ -101,30 +98,20 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
                 except IndexError:
                     break
 
-                elapsed_time = next_action['time'] - action['time']
-                print(f"\nProcessing action: {action['type']} at {action['pos']}")
+                # Calculate the expected time based on the original recording
+                expected_time = next_action['time']
+                actual_elapsed_total = time() - playback_start_time
 
-                print(f"Recorded elapsed time between actions: {elapsed_time} seconds")
+                # Adjust the sleep time to align with the original timing
+                adjusted_sleep_time = max(expected_time - actual_elapsed_total, 0)
 
-                if elapsed_time < 0:
-                    raise Exception('Unexpected action ordering')
+                print(f"\nProcessing action: {action['type']} at {action.get('pos', 'None')}")
+                print(f"Expected time: {expected_time}")
+                print(f"Actual elapsed time since start: {actual_elapsed_total}")
+                print(f"Adjusted sleep time: {adjusted_sleep_time} seconds (after correction)")
 
-                actual_elapsed = time() - action_start_time
-                print(f"Actual time since last action started: {actual_elapsed} seconds")
-
-                adjusted_elapsed_time = elapsed_time - actual_elapsed
-                if adjusted_elapsed_time < 0:
-                    adjusted_elapsed_time = 0
-
-                print(f"Adjusted sleep time: {adjusted_elapsed_time} seconds (after correction)")
-
-                # Log detailed differences
-                if adjusted_elapsed_time == 0 and elapsed_time > 0:
-                    print(f"Warning: Adjusted time is zero, expected time was {elapsed_time} seconds. There may be timing drift.")
-
-                sleep(adjusted_elapsed_time)
+                sleep(adjusted_sleep_time)
                 
-                #
         # Save logged data to a new JSON file in the log_records folder
         log_dir = os.path.join(script_dir, 'log_records')
         os.makedirs(log_dir, exist_ok=True)  # Create the log_records directory if it doesn't exist
@@ -150,7 +137,6 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
         print(f"JSON decode error: {e}")
     except Exception as e:
         print(f"An error occurred: {e}")
-
 
 def convertKey(button):
     PYNPUT_SPECIAL_CASE_MAP = {
