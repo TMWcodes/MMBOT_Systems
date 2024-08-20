@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from scipy.stats import entropy
-from key_logger import main as start_key_logger
+from key_logger import KeyLogger
 from tkinter import filedialog, simpledialog
 from data import (
     load_json, load_coordinates, load_coordinates_from_dicts, merge_json_files, 
@@ -94,13 +94,27 @@ def cluster(coordinates, n_clusters=3):
     return kmeans
 
 
-def run_key_logger(output_filename):
-    start_key_logger(output_filename)
+def run_key_logger(output_filename, record_move_actions, min_move_interval):
+    # Initialize and start the key logger with additional parameters
+    key_logger = KeyLogger(record_move_actions, min_move_interval)
+    key_logger.start(output_filename)
 
 def start_key_logger_with_filename():
     output_filename = simpledialog.askstring("Input", "Enter filename for recording:", initialvalue='default_name')
     if output_filename:
-        run_key_logger(output_filename)
+        # Prompt user for additional settings
+        record_move_actions = simpledialog.askstring("Input", "Record move actions? (yes/no):", initialvalue='yes')
+        if record_move_actions.lower() in ['yes', 'y']:
+            record_move_actions = True
+        else:
+            record_move_actions = False
+
+        min_move_interval = simpledialog.askfloat("Input", "Enter minimum time interval between move actions (seconds):", initialvalue=1.0)
+        if min_move_interval is None:
+            min_move_interval = 1.0
+
+        # Call run_key_logger with the collected parameters
+        run_key_logger(output_filename, record_move_actions, min_move_interval)
 
 def select_files():
     recordings_dir = os.path.join(os.path.dirname(__file__), 'recordings')
