@@ -66,7 +66,6 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
                         x_var, y_var = vary_coordinates(target_pos[0], target_pos[1], variation)
                         target_pos = (target_pos[0] + x_var, target_pos[1] + y_var)
 
-                    print(f"Target position before check: {target_pos}")
                     if not isinstance(target_pos, (tuple, list)) or len(target_pos) != 2:
                         raise ValueError("target_pos must be a tuple or list of two integers")
                     
@@ -76,13 +75,13 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
 
                     if path_type == 'spline':
                         points = generate_spline_path(current_pos, target_pos)
-                        print(f"moving to {target_pos}")
                         move_mouse_with_easing(zip(*(i.astype(int) for i in points)), duration=0.1, easing_function=pyautogui.easeInOutQuad)
                     elif path_type == 'bezier':
                         path = create_bezier_path(current_pos, target_pos)
-                        print(f"moving to {target_pos}")
                         for point in path:
                             pyautogui.moveTo(point[0], point[1], duration=0.1, tween=pyautogui.easeInQuad)
+                    elif path_type == 'none':
+                        pyautogui.moveTo(target_pos[0], target_pos[1], duration=0.1)
                     
                     if action['type'] == EventType.CLICK:
                         color = check_color(target_pos)
@@ -95,7 +94,6 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
                             'color': color
                         })
                         pyautogui.click(target_pos[0], target_pos[1], button='left' if action['button'] == 'Button.left' else 'right', duration=0.25)
-                        print(f"{action['button']} click on {action['pos']}")
                 
                 # Sleep until next action
                 try:
@@ -104,14 +102,29 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
                     break
 
                 elapsed_time = next_action['time'] - action['time']
+                print(f"\nProcessing action: {action['type']} at {action['pos']}")
+
+                print(f"Recorded elapsed time between actions: {elapsed_time} seconds")
+
                 if elapsed_time < 0:
                     raise Exception('Unexpected action ordering')
-                elapsed_time -= (time() - action_start_time)
-                if elapsed_time < 0:
-                    elapsed_time = 0
-                print("sleeping for {}".format(elapsed_time))
-                sleep(elapsed_time)
-        
+
+                actual_elapsed = time() - action_start_time
+                print(f"Actual time since last action started: {actual_elapsed} seconds")
+
+                adjusted_elapsed_time = elapsed_time - actual_elapsed
+                if adjusted_elapsed_time < 0:
+                    adjusted_elapsed_time = 0
+
+                print(f"Adjusted sleep time: {adjusted_elapsed_time} seconds (after correction)")
+
+                # Log detailed differences
+                if adjusted_elapsed_time == 0 and elapsed_time > 0:
+                    print(f"Warning: Adjusted time is zero, expected time was {elapsed_time} seconds. There may be timing drift.")
+
+                sleep(adjusted_elapsed_time)
+                
+                #
         # Save logged data to a new JSON file in the log_records folder
         log_dir = os.path.join(script_dir, 'log_records')
         os.makedirs(log_dir, exist_ok=True)  # Create the log_records directory if it doesn't exist
@@ -165,6 +178,3 @@ def convertKey(button):
         return PYNPUT_SPECIAL_CASE_MAP[cleaned_key]
 
     return cleaned_key
-
-# Example usage
-# playActions('your_filename.json', path_type='spline', vary_coords=True, variation=0.05)

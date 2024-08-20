@@ -136,8 +136,13 @@ def play_files_sequentially(filenames, path_type, vary_coords, variation, delay,
             time.sleep(delay)
 ## new
 def get_playback_config():
+    # Prompt for path type with the 'none' option added
+    path_type = simpledialog.askstring("Input", "Enter path type (none/spline/bezier):", initialvalue='spline')
+    while path_type not in ['none', 'spline', 'bezier']:
+        path_type = simpledialog.askstring("Input", "Invalid input. Enter path type (none/spline/bezier):", initialvalue='spline')
+    
     config = {
-        'path_type': simpledialog.askstring("Input", "Enter path type:", initialvalue='spline'),
+        'path_type': path_type,
         'vary_coords': simpledialog.askstring("Input", "Vary coordinates? (yes/no)", initialvalue='yes').lower() in ['yes', 'true', '1'],
         'ignore_move_actions': simpledialog.askstring("Input", "Ignore move actions? (yes/no)", initialvalue='no').lower() in ['yes', 'true', '1']
     }
