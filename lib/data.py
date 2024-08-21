@@ -323,19 +323,54 @@ def csv_to_json(csv_filename, json_filename):
 def json_to_dataframe(json_file):
     data = load_json(json_file)
     df = pd.DataFrame(data)
-    
-    # Format 'time' to 4 decimal places
-    df['time'] = df['time'].apply(lambda x: f"{x:.4f}")
-    
-    # Handle 'pos'
-    df['pos'] = df['pos'].apply(lambda x: ', '.join(map(str, x)) if isinstance(x, list) else 'None')
-    
-    # Handle 'color'
-    df['color'] = df['color'].apply(lambda x: ', '.join(map(str, x)) if isinstance(x, list) else 'None')
-    
-    return df
 
+    # Convert 'pos' and 'color' lists to strings for display
+    df['pos'] = df['pos'].apply(lambda x: ', '.join(map(str, x)) if x else 'None')
+    df['color'] = df['color'].apply(lambda x: ', '.join(map(str, x)) if x else 'None')
 
+    # Round the 'time' column to 4 decimal places
+    df['time'] = df['time'].round(4)
+
+    # Initialize a list to hold the filtered rows
+    filtered_data = []
+    i = 0
+    while i < len(df):
+        current_row = df.iloc[i].copy()  # Make a copy to avoid SettingWithCopyWarning
+        
+        if current_row['type'] == 'keyDown':
+            if i + 1 < len(df):
+                next_row = df.iloc[i + 1].copy()  # Make a copy to avoid SettingWithCopyWarning
+
+                # Check if the next event is 'keyUp' for the same key and with a short time interval
+                if (
+                    next_row['type'] == 'keyUp'
+                    and current_row['button'] == next_row['button']
+                    and next_row['time'] - current_row['time'] <= 0.2
+                ):
+                    # Combine 'keyDown' and 'keyUp' into a single 'keyPress' event
+                    current_row['type'] = 'keyPress'
+                    filtered_data.append(current_row)
+                    i += 1  # Skip the next row since it's combined
+                else:
+                    # If the key is not immediately released (like shift), keep the keyDown
+                    filtered_data.append(current_row)
+            else:
+                filtered_data.append(current_row)
+        elif current_row['type'] == 'keyUp':
+            # Keep 'keyUp' if it is not combined with 'keyDown'
+            if not (i > 0 and df.iloc[i - 1]['type'] == 'keyDown' and
+                    df.iloc[i - 1]['button'] == current_row['button'] and
+                    current_row['time'] - df.iloc[i - 1]['time'] <= 0.2):
+                filtered_data.append(current_row)
+        else:
+            # Keep the event if it's not a 'keyUp'
+            filtered_data.append(current_row)
+        
+        i += 1
+
+    # Convert the filtered data back to a DataFrame
+    df_filtered = pd.DataFrame(filtered_data)
+    return df_filtered
 
 # def main():
 
