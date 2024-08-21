@@ -4,7 +4,7 @@ import json
 import os
 from scipy.stats import entropy
 from collections import Counter
-import pandas as pd#
+import pandas as pd
 from itertools import islice
 
 
@@ -319,68 +319,25 @@ def csv_to_json(csv_filename, json_filename):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def main():
-       
-# Example usage
-   
-#     
-#     compute_time_stats(filename)
-#     repeated_sequences = detect_repeated_sequences(coordinates)
-#     print("Repeated Sequences:", repeated_sequences)
+
+def json_to_dataframe(json_file):
+    data = load_json(json_file)
+    df = pd.DataFrame(data)
     
-#     rock_coords = divide_coordinates(coordinates, 5, '')
-
-#   coordinates_list = [
-#     {'x': 1435, 'y': 758},
-#     {'x': 1376, 'y': 696},
-#     {'x': 1475, 'y': 302}
-# ]
-#   coordinates = load_coordinates_from_dicts(coordinates_list)
-   
-#     # Perform clustering with the optimal number of clusters
-#     final_clusters = opt_clusters(coordinates)
-#     cluster(coordinates, n_clusters=final_clusters)
+    # Format 'time' to 4 decimal places
+    df['time'] = df['time'].apply(lambda x: f"{x:.4f}")
     
-#     num_repeats  = 10
-#     threshold = 0.3
-#     repeated_sequences = [np.tile(coordinates, (i, 1)) for i in range(1, num_repeats + 1)]
-#     # print(repeated_sequences)
+    # Handle 'pos'
+    df['pos'] = df['pos'].apply(lambda x: ', '.join(map(str, x)) if isinstance(x, list) else 'None')
+    
+    # Handle 'color'
+    df['color'] = df['color'].apply(lambda x: ', '.join(map(str, x)) if isinstance(x, list) else 'None')
+    
+    return df
 
-#     for i in range(1, num_repeats + 1):
-#         repeated_sequence = np.tile(coordinates, (i, 1))
 
 
-#     # #     #  # # Perform clustering with the optimal number of clusters
-#     final_clusters = opt_clusters(repeated_sequence)
-#     cluster(repeated_sequence, n_clusters=final_clusters)
-#     shannon_entropy = calculate_shannon_entropy(repeated_sequence)
-#     repeated_coords = detect_repetition(repeated_sequence, threshold)
-   
-#     print(f"Sequence repeated {i} times - Shannon Entropy: {shannon_entropy:.3f}")
-#     print(f"Repeated Coordinates:{repeated_coords}")
-#     print(f"there are {len(coordinates)} coordinates")
-#     # Call the method with the sequence repeated 100 times
-#     # autocorr_metric = plot_autocorrelation(coordinates, num_repeats)
+# def main():
 
-#     for num_repeats in [1, num_repeats, 100]:
-#         autocorr_metric = plot_autocorrelation(coordinates, num_repeats)
-
-# json_to_csv('color_coord_test_01_log_1.json', 'csv_data/output.csv')
-# csv_to_json('csv_data/output.csv', 'log_records/output.json')
-
-# # compare json files
-# # file_in = input("enter second file to compare: ")
-    file1 = 'lum_mine_copper_01.json'
-    file2 = 'lum_mine_copper_01_log.json'
-    try:
-        compare_json_files(file1, file2)
-    except FileNotFoundError as e:
-        print(e)
-
-#     file_1 = ''
-#     file_2 = ''
-# # Combine the JSON files
-#     combine_json(file_1, file_2)
-
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

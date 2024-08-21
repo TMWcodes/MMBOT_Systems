@@ -13,7 +13,7 @@ from data import (
     load_json, load_coordinates, load_coordinates_from_dicts, merge_json_files, 
     filter_clicks, compare_entries, calculate_time_differences, 
     compute_statistics, calculate_shannon_entropy, detect_repetition, detect_repeated_sequences, compute_time_stats, plot_autocorrelation, flatten_json, unflatten_json, 
-    json_to_csv, compute_time_stats, count_repeated_sequences, merge_json_files,
+    json_to_csv, compute_time_stats, count_repeated_sequences, merge_json_files, json_to_dataframe
     
 )
 

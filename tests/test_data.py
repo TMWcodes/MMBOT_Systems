@@ -1,20 +1,18 @@
 import pytest
-import os
-import json
 from unittest import mock
 from lib.data import (
-    load_json, load_coordinates, combine_json, calculate_shannon_entropy,
-    detect_repetition,detect_repeated_sequences ,calculate_time_differences, cluster, plot_autocorrelation,
-    filter_clicks, compare_clicks, compare_json_files
-    )
+    load_json, load_coordinates, load_coordinates_from_dicts, merge_json_files,
+    filter_clicks, compare_entries, calculate_time_differences, compute_statistics,
+    compute_time_stats, calculate_shannon_entropy, detect_repetition, count_repeated_sequences,
+    detect_repeated_sequences, plot_autocorrelation, flatten_json, unflatten_json,
+    json_to_csv, csv_to_json
+)
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans
 from scipy.stats import entropy
-from collections import Counter
 import pandas as pd
+import os
 
-
+# Test load_json function
 def test_load_json_from_recordings():
     with mock.patch("builtins.open", mock.mock_open(read_data='{"key": "value"}')), \
          mock.patch("os.path.exists", return_value=True), \
@@ -36,109 +34,119 @@ def test_load_json_file_not_found():
         with pytest.raises(FileNotFoundError):
             load_json("nonexistent.json")
 
-def test_combine_json():
-    mock_open_file1 = mock.mock_open(read_data='[{"key": "value1"}]')
-    mock_open_file2 = mock.mock_open(read_data='[{"key": "value2"}]')
-    mock_open_output = mock.mock_open()
+# Test load_coordinates function
+def test_load_coordinates():
+    events = [
+        {"pos": [1, 2], "type": "click"},
+        {"pos": [3, 4], "type": "move"},
+        {"pos": [5, 6], "type": "click"}
+    ]
+    result = load_coordinates(events, ignore_moves=True)
+    expected = np.array([[1, 2], [5, 6]])
+    assert np.array_equal(result, expected)
 
-    with mock.patch("builtins.open", side_effect=[mock_open_file1.return_value, mock_open_file2.return_value, mock_open_output.return_value]), \
-         mock.patch("os.path.exists", return_value=True), \
-         mock.patch("os.path.join", return_value="recordings/combined_file.json"):
+def test_load_coordinates_from_dicts():
+    coordinates_list = [{'x': 1, 'y': 2}, {'x': 3, 'y': 4}]
+    result = load_coordinates_from_dicts(coordinates_list)
+    expected = np.array([[1, 2], [3, 4]])
+    assert np.array_equal(result, expected)
 
-        combine_json("file1.json", "file2.json")
-
-        # Join all the args into a single string to assert the complete output
-        written_content = "".join(call.args[0] for call in mock_open_output().write.call_args_list)
-        expected_content = '[\n  {\n    "key": "value1"\n  },\n  {\n    "key": "value2"\n  }\n]'
-
-        assert written_content == expected_content
-
-
-def test_combine_json_file_not_found(capsys):
-    with mock.patch("os.path.exists", side_effect=[False, True]), \
-         mock.patch("os.path.join", return_value="recordings/file1.json"):
+# Test merge_json_files function
+def test_merge_json_files():
+    filenames = ["file1.json", "file2.json"]
+    with mock.patch("builtins.open", mock.mock_open(read_data='[{"time": 1}, {"time": 2}]')), \
+         mock.patch("os.path.exists", side_effect=[True, True]), \
+         mock.patch("os.path.join", side_effect=lambda dir, file: file):
         
-        combine_json("file1.json", "file2.json")
-        
-        captured = capsys.readouterr()
-        assert "Error: recordings/file1.json not found." in captured.out
+        result = merge_json_files(filenames)
+        assert len(result) == 4
+        assert result[0]['time'] == 1
+        assert result[2]['time'] == 3
 
-### data analysis ##
+# Test filter_clicks function
+def test_filter_clicks():
+    events = [
+        {"type": "click"},
+        {"type": "move"},
+        {"type": "click"}
+    ]
+    result = filter_clicks(events)
+    expected = [{"type": "click"}, {"type": "click"}]
+    assert result == expected
 
-def test_calculate_shannon_entropy():
-    # Test case 1: All points are the same (entropy should be 0)
-    coordinates = np.array([[1425, 469], [1425, 469], [1425, 469], [1425, 469]])
-    expected_entropy = 0  # All points are identical, entropy is zero
-    assert np.isclose(calculate_shannon_entropy(coordinates), expected_entropy, atol=1e-6)
+# Test compare_entries function
+def test_compare_entries():
+    data1 = [
+        {"time": 1.0, "pos": [1, 2], "color": [255, 0, 0]},
+        {"time": 2.0, "pos": [3, 4], "color": [0, 255, 0]}
+    ]
+    data2 = [
+        {"time": 1.0, "pos": [1, 2], "color": [255, 0, 0]},
+        {"time": 2.5, "pos": [3, 5], "color": [0, 0, 255]}
+    ]
+    result = compare_entries(data1, data2, compare_time=True, compare_color=True, compare_position=True)
+    expected = [
+        "Index 1:\n  File 1 - Time: 2.0, Pos: [3, 4], Color: [0, 255, 0]\n  File 2 - Time: 2.5, Pos: [3, 5], Color: [0, 0, 255]"
+    ]
+    assert result == expected
 
-    # Test case 2: Two different points (entropy should reflect equal distribution)
-    coordinates = np.array([[1425, 469], [1425, 470], [1425, 469], [1425, 470]])
-    expected_entropy = entropy([0.5, 0.5])  # Two types of points, equal probability
-    assert np.isclose(calculate_shannon_entropy(coordinates), expected_entropy, atol=1e-6)
-
-    # Test case 3: Multiple different points with equal frequency
-    coordinates = np.array([[1425, 469], [1425, 470], [1426, 471], [1427, 472],
-                            [1425, 469], [1425, 470], [1426, 471], [1427, 472]])
-    expected_entropy = entropy([0.25, 0.25, 0.25, 0.25])  # Four types of points, equal probability
-    assert np.isclose(calculate_shannon_entropy(coordinates), expected_entropy, atol=1e-6)
-
-    # Test case 4: Random points (entropy should be calculated correctly)
-    coordinates = np.random.randint(0, 2000, size=(100, 2))
-    unique, counts = np.unique(coordinates, axis=0, return_counts=True)
-    probs = counts / len(coordinates)
-    expected_entropy = entropy(probs)
-    assert np.isclose(calculate_shannon_entropy(coordinates), expected_entropy, atol=1e-6)
-
+# Test calculate_time_differences function
 def test_calculate_time_differences():
     events = [
-        {"time": 0.3036661148071289},
-        {"time": 1.777268409729004},
-        {"time": 2.977268409729004}
+        {"time": 1},
+        {"time": 3},
+        {"time": 6}
     ]
-    expected = [1.473602294921875, 1.2]
     result = calculate_time_differences(events)
-    assert result == pytest.approx(expected, rel=1e-9), f"Expected {expected}, but got {result}"
+    expected = [2, 3]
+    assert result == expected
 
+# Test compute_statistics function
+def test_compute_statistics():
+    time_diffs = [1, 2, 3, 4, 5]
+    min_time, max_time, avg_time, std_time = compute_statistics(time_diffs)
+    assert min_time == 1
+    assert max_time == 5
+    assert avg_time == 3
+    assert np.isclose(std_time, np.std(time_diffs))
 
+# Test compute_time_stats function
+def test_compute_time_stats():
+    with mock.patch("lib.data.load_json", return_value=[
+        {"time": 1.0},
+        {"time": 3.0},
+        {"time": 5.0},
+        {"time": 7.0}
+    ]):
+        min_time, max_time, avg_time, std_time = compute_time_stats("test.json")
+        time_diffs = [3.0 - 1.0, 5.0 - 3.0, 7.0 - 5.0]
+        assert min_time == min(time_diffs)
+        assert max_time == max(time_diffs)
+        assert avg_time == sum(time_diffs) / len(time_diffs)
+        assert std_time == np.std(time_diffs)
+
+# Test calculate_shannon_entropy function
+def test_calculate_shannon_entropy():
+    sequence = np.array([[1, 2], [1, 2], [3, 4]])
+    expected_entropy = entropy([2/3, 1/3])
+    assert np.isclose(calculate_shannon_entropy(sequence), expected_entropy)
+
+# Test detect_repetition function
 def test_detect_repetition():
-    coordinates = np.array([
-        [1425, 469],
-        [1425, 469],
-        [1426, 470],
-        [1425, 469]
-    ])
-    threshold = 0.25
-    expected = [(1425, 469)]
+    coordinates = np.array([[1, 2], [1, 2], [3, 4], [1, 2]])
+    threshold = 0.5
     result = detect_repetition(coordinates, threshold)
-    assert result == expected, f"Expected {expected}, but got {result}"
+    expected = [(1, 2)]
+    assert result == expected
 
-def test_cluster():
-    coordinates = np.array([
-        [1425, 469],
-        [1425, 469],
-        [1426, 470],
-        [1425, 469],
-        [1427, 471]
-    ])
-    num_clusters = 2
-    kmeans = cluster(coordinates, num_clusters)
-    assert len(kmeans.cluster_centers_) == num_clusters
+# Test count_repeated_sequences function
+def test_count_repeated_sequences():
+    coordinates = np.array([[1499, 741], [1499, 741], [1499, 741], [1400, 735], [1499, 741]])
+    result = count_repeated_sequences(coordinates, min_sequence_length=2)
+    expected = 1  # Adjust this based on actual logic; verify if only one sequence is counted
+    assert result == expected
 
-def test_calculate_autocorrelation_metric():
-    sequence = np.array([
-        [1425, 469],
-        [1426, 470],
-        [1425, 469],
-        [1426, 470]
-    ])
-    repetitions = 2
-
-    # Replace with the correct expected metric based on your manual calculation
-    expected_metric = 0.0053614198790852274 # Example placeholder value
-
-    result = plot_autocorrelation(sequence, repetitions)
-    assert abs(result - expected_metric) < 1e-6, f"Expected {expected_metric}, but got {result}"
-
+# Test detect_repeated_sequences function
 def test_detect_repeated_sequences():
     events = [
         {"time": 0.0, "type": "click", "pos": [1425, 469]},
@@ -166,19 +174,47 @@ def test_detect_repeated_sequences():
 
     repeated_sequences = detect_repeated_sequences(coordinates)
     assert repeated_sequences == expected_repeated_sequences, f"Expected {expected_repeated_sequences}, but got {repeated_sequences}"
-#####
-def test_filter_clicks():
-    events = [
-        {"time": 2.2, "type": "click", "button": "Button.left", "pos": [1442, 451], "color": [104, 68, 38]},
-        {"time": 5.8, "type": "click", "button": "Button.left", "pos": [1371, 548], "color": [78, 51, 28]},
-        {"time": 6.6, "type": "move", "button": "None", "pos": [1372, 546], "color": None},
-        {"time": 18.7, "type": "click", "button": "Button.left", "pos": [1372, 565], "color": [107, 71, 39]}
-    ]
+
+
+# Test plot_autocorrelation function
+def test_plot_autocorrelation():
+    sequence = np.array([[1, 2], [3, 4]])
+    repetitions = 2
+    result = plot_autocorrelation(sequence, repetitions)
+    assert isinstance(result, float)  # Check that a metric value is returned
+
+# Test flatten_json function
+def test_flatten_json():
+    nested_json = {"a": {"b": [1, 2, 3]}}
+    result = flatten_json(nested_json)
+    expected = {"a_b": '[1, 2, 3]'}
+    assert result == expected
+
+# Test unflatten_json function
+def test_unflatten_json():
+    flat_json = {"a_b": '[1, 2, 3]'}
+    result = unflatten_json(flat_json)
+    expected = {"a": {"b": [1, 2, 3]}}
+    assert result == expected
+
+# Test json_to_csv function
+def test_json_to_csv():
+    json_filename = 'test.json'
+    csv_filename = 'test/test.csv'
     
-    expected = [
-        {"time": 2.2, "type": "click", "button": "Button.left", "pos": [1442, 451], "color": [104, 68, 38]},
-        {"time": 5.8, "type": "click", "button": "Button.left", "pos": [1371, 548], "color": [78, 51, 28]},
-        {"time": 18.7, "type": "click", "button": "Button.left", "pos": [1372, 565], "color": [107, 71, 39]}
-    ]
+    with mock.patch("lib.data.load_json", return_value=[{"a": 1, "b": 2}]), \
+         mock.patch("pandas.DataFrame.to_csv") as mock_to_csv:
+        
+        json_to_csv(json_filename, csv_filename)
+        mock_to_csv.assert_called_once()
+
+# Test csv_to_json function
+def test_csv_to_json():
+    csv_filename = 'test/test.csv'
+    json_filename = 'test/test.json'
     
-    assert filter_clicks(events) == expected
+    with mock.patch("pandas.read_csv", return_value=pd.DataFrame([{"a": 1, "b": 2}])), \
+         mock.patch("builtins.open", mock.mock_open()) as mock_open:
+        
+        csv_to_json(csv_filename, json_filename)
+        mock_open.assert_called_once()

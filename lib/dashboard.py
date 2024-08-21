@@ -7,11 +7,11 @@ from controller import (
     filter_clicks, load_json, get_time_stats, 
     process_repeated_sequences, process_shannon_entropy,
     get_repeated_sequences_detailed, merge_selected_json_files, plot_autocorrelation_from_file,
-    cluster, opt_clusters, compare_entries
+    cluster, opt_clusters, compare_entries, json_to_dataframe
 )
 import numpy as np
-
 import os
+
 def add_files():
     filenames = select_files()
     for filename in filenames:
@@ -297,7 +297,56 @@ def on_mouse_wheel(event):
     # Scroll up or down depending on the mouse wheel movement
     canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
-# Main application window
+
+###
+def display_dataframe_in_treeview(df, parent_frame):
+    for widget in parent_frame.winfo_children():
+        widget.destroy()
+
+    tree = ttk.Treeview(parent_frame)
+    tree.pack(expand=True, fill='both')
+
+    tree["columns"] = list(df.columns)
+    tree["show"] = "headings"
+
+    for col in df.columns:
+        tree.heading(col, text=col)
+        tree.column(col, width=100)
+
+    for _, row in df.iterrows():
+        tree.insert("", "end", values=list(row))
+
+# Function to load and display JSON data
+def load_and_display_json():
+    # Get the selected items from the listbox
+    selected_files = file_listbox.curselection()
+
+    # If no files are selected, show a message
+    if not selected_files:
+        messagebox.showwarning("No selection", "Please select a file from the list.")
+        return
+    
+    # Clear the existing table content
+    for item in table_tree.get_children():
+        table_tree.delete(item)
+    
+    for index in selected_files:
+        # Get the filename from the listbox
+        json_file = file_listbox.get(index)
+
+        try:
+            # Convert JSON to DataFrame
+            df = json_to_dataframe(json_file)
+            
+            # Insert DataFrame content into the Treeview
+            for i, row in df.iterrows():
+                table_tree.insert("", "end", values=list(row))
+        
+        except FileNotFoundError as e:
+            messagebox.showerror("File Not Found", str(e))
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {str(e)}")
+###
 root = tk.Tk()
 root.title("Dashboard")
 
@@ -335,10 +384,11 @@ merge_json_button = tk.Button(scrollable_frame, text="Merge JSON Files", command
 play_record_button = tk.Button(scrollable_frame, text="Play Selected Actions", command=play_selected_actions)
 start_record_button = tk.Button(scrollable_frame, text="Start Key Logger", command=start_key_logger_with_filename)
 repeated_sequences_button = tk.Button(scrollable_frame, text="Analyze Repeated Sequences", command=analyze_repeated_sequences)
+detailed_sequences_button = tk.Button(scrollable_frame, text="View Repeated Sequences", command=display_repeated_sequences_detailed)
 compare_json_button = tk.Button(scrollable_frame, text="Compare Selected JSON", command=compare_selected_json)
 time_stats_button = tk.Button(scrollable_frame, text="Show Time Statistics", command=display_time_stats)
 shannon_entropy_button = tk.Button(scrollable_frame, text="Calculate Shannon Entropy", command=display_shannon_entropy)
-detailed_sequences_button = tk.Button(scrollable_frame, text="View Repeated Sequences", command=display_repeated_sequences_detailed)
+
 autocorrelation_button = tk.Button(scrollable_frame, text="Plot Autocorrelation", command=plot_autocorrelation_for_selected)
 clustering_button = tk.Button(scrollable_frame, text="Cluster Coordinates", command=perform_clustering)
 
@@ -358,19 +408,54 @@ shannon_entropy_button.pack(pady=20)
 autocorrelation_button.pack(pady=20)
 clustering_button.pack(pady=20)
 
-# Create a frame for the display area (right side)
+# Create a frame for the display area (right side) and Notebook (Tabbed Interface)
 right_frame = tk.Frame(root)
 right_frame.pack(side="right", fill="both", expand=True)
 
-# Create a Text widget for displaying stats (read-only mode)
-stats_text = tk.Text(right_frame, wrap=tk.WORD, state=tk.DISABLED)
+notebook = ttk.Notebook(right_frame)
+notebook.pack(expand=True, fill="both")
+
+# Create Frames for each tab
+table_tab = ttk.Frame(notebook)
+stats_tab = ttk.Frame(notebook)
+
+notebook.add(table_tab, text="Table View")
+notebook.add(stats_tab, text="Statistics")
+
+table_tree = ttk.Treeview(table_tab)
+
+# Define the columns
+table_tree['columns'] = ('time', 'type', 'button', 'pos', 'color')
+
+# Format the columns
+table_tree.column("#0", width=0, stretch=tk.NO)  # Hidden index column
+table_tree.column("time", anchor=tk.W, width=100)
+table_tree.column("type", anchor=tk.W, width=100)
+table_tree.column("button", anchor=tk.W, width=100)
+table_tree.column("pos", anchor=tk.W, width=150)
+table_tree.column("color", anchor=tk.W, width=150)
+
+# Define headings
+table_tree.heading("#0", text="", anchor=tk.W)  # Hidden index column
+table_tree.heading("time", text="Time", anchor=tk.W)
+table_tree.heading("type", text="Type", anchor=tk.W)
+table_tree.heading("button", text="Button", anchor=tk.W)
+table_tree.heading("pos", text="Position", anchor=tk.W)
+table_tree.heading("color", text="Color", anchor=tk.W)
+
+# Add the Treeview to the table_tab with a scrollbar
+table_tree.pack(fill="both", expand=True)
+
+# Create a button to load and display JSON data
+display_json_button = tk.Button(right_frame, text="Display JSON Data", command=load_and_display_json)
+display_json_button.pack(pady=20)
+
+# Add stats_text to stats_tab
+stats_text = tk.Text(stats_tab, wrap=tk.WORD, state=tk.DISABLED)
 stats_text.pack(side="left", fill="both", expand=True)
 
-# Create a scrollbar for the Text widget
-text_scrollbar = ttk.Scrollbar(right_frame, orient="vertical", command=stats_text.yview)
+text_scrollbar = ttk.Scrollbar(stats_tab, orient="vertical", command=stats_text.yview)
 text_scrollbar.pack(side="right", fill="y")
-
-# Configure the Text widget to use the scrollbar
 stats_text.configure(yscrollcommand=text_scrollbar.set)
 
 # Create checkboxes for comparison options
