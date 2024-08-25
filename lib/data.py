@@ -27,15 +27,7 @@ def load_json(filename):
     # If file is not found in both directories
     raise FileNotFoundError(f"File '{filename}' not found in 'recordings' or 'log_records' directories.")
 # Load coordinates from JSON data with an option to ignore move actions
-def load_coordinates(events, ignore_moves=False):
-    coordinates = []
-    for event in events:
-        if ignore_moves and event.get('type') == 'move':
-            continue
-        pos = event.get('pos')
-        if pos and isinstance(pos, list) and len(pos) == 2:
-            coordinates.append(pos)
-    return np.array(coordinates)
+
 
 def load_coordinates_from_dicts(coordinates_list):
     coordinates = [[coord['x'], coord['y']] for coord in coordinates_list]
@@ -146,7 +138,6 @@ def compute_time_stats(filename, ignore_moves="yes"):
     #     print("Suspicious bot-like behavior detected!")
     # else:
     #     print("Likely human behavior.")
-# Convert coordinates list to NumPy array
     
 
 def calculate_shannon_entropy(sequence):
@@ -154,19 +145,6 @@ def calculate_shannon_entropy(sequence):
     probs = counts / len(sequence)
     shannon_entropy = entropy(probs)
     return shannon_entropy
-
-# Elbow method to determine the optimal number of clusters
-
-def detect_repetition(coordinates, threshold):
-    coordinate_tuples = tuple(map(tuple, coordinates))
-    coordinate_counts = Counter(coordinate_tuples)
-    total_coordinates = len(coordinates)
-    # Calculate frequency of each event
-    frequencies = {coord: count / total_coordinates for coord, count in coordinate_counts.items()}
-    # Check if any event frequency exceeds the threshold
-    repeated_coordinates = [coord for coord, freq in frequencies.items() if freq > threshold]
-    
-    return repeated_coordinates
 
 def count_repeated_sequences(coordinates, min_sequence_length=5, min_repetitions=2):
     sequences = {}
@@ -373,6 +351,7 @@ def json_to_dataframe(json_file):
     return df_filtered
 
 # def main():
-
+ 
+    
 # if __name__ == "__main__":
 #     main()

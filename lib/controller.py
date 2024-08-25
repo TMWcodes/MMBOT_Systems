@@ -10,10 +10,10 @@ from scipy.stats import entropy
 from key_logger import KeyLogger
 from tkinter import filedialog, simpledialog
 from data import (
-    load_json, load_coordinates, load_coordinates_from_dicts, merge_json_files, 
+    load_json, merge_json_files, 
     filter_clicks, compare_entries, calculate_time_differences, 
-    compute_statistics, calculate_shannon_entropy, detect_repetition, detect_repeated_sequences, compute_time_stats, plot_autocorrelation, flatten_json, unflatten_json, 
-    json_to_csv, compute_time_stats, count_repeated_sequences, merge_json_files, json_to_dataframe
+    compute_statistics, calculate_shannon_entropy, detect_repeated_sequences, compute_time_stats,
+    plot_autocorrelation,compute_time_stats, count_repeated_sequences, merge_json_files, json_to_dataframe
     
 )
 
@@ -184,11 +184,6 @@ def get_time_stats(file_path, ignore_moves=True):
     except Exception as e:
         print(f"An error occurred: {e}")
         return None, None, None, None
-
-# def get_repeated_sequences_count(file_path, min_sequence_length=5, min_repetitions=2):
-#     data = load_json(file_path)
-#     coordinates = [event.get('pos') for event in data if event.get('type') == 'click']
-#     return count_repeated_sequences(coordinates, min_sequence_length, min_repetitions)
 
 def get_repeated_sequences_detailed(file_path, repetitions, min_sequence_length=5):
     data = load_json(file_path)
