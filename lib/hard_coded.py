@@ -6,6 +6,8 @@ from data import load_json, filter_clicks
 import json
 import numpy as np
 import os
+from math import sqrt
+
 
 log_data=[]
 # color = check_color()
@@ -140,6 +142,9 @@ def perform_path_navigation(path_name, path, log_data):
         # Simulate delay
         sleep(random.uniform(1, 3))  # Random delay
 
+
+####
+
 def pre_check_click_colors(filename):
     # Load events from the JSON file
     events = load_json(filename)
@@ -148,35 +153,72 @@ def pre_check_click_colors(filename):
     coordinates = load_coordinates(events, True)
     click_events = filter_clicks(events)
     expected_colors = extract_colors_from_clicks(click_events)
-    unique_colors = filter_duplicate_colors(expected_colors)
+    
 
     print(f'Coordinates are {coordinates}')
     print(f'Expected colors are {expected_colors}, {len(expected_colors)}')
-    print(f'Unique colors are {unique_colors}, {len(unique_colors)}')
 
     # Iterate over the coordinates and check/click if the color matches
     for idx, coord in enumerate(coordinates):
         coordinate = (int(coord[0]), int(coord[1]))
         check_and_click_if_color_matches(coordinate, expected_colors, idx)
 
+def are_colors_similar(color1, color2, tolerance):
+    distance = sqrt(sum((comp1 - comp2) ** 2 for comp1, comp2 in zip(color1, color2)))
+    return distance <= tolerance
+
+# Step 2: Define a function that checks if a color matches any in the sample set
+def is_color_in_samples(color, samples, tolerance):
+    for sample in samples:
+        if are_colors_similar(color, sample, tolerance):
+            return sample  # Return the matching sample
+    return None  # 
+
+
 
 def main():
-    # filename = "color_range.json"
-    # events = load_json(filename)
+    filename = "hard_color_sample_2.json"
+    events = load_json(filename)
     
-    # # Load coordinates and extract colors from clicks
-    # coordinates = load_coordinates(events, True)
-    # click_events = filter_clicks(events)
-    # expected_colors = extract_colors_from_clicks(click_events)  # Assuming this provides expected colors
-    # print(f'Coordinates are {coordinates}')
-    # print(f'Expected colors are {expected_colors}, {len(expected_colors)}')
+    # Load coordinates 
+    coordinates = load_coordinates(events, True)
+
+    # Extract colors from clicks
+    click_events = filter_clicks(events)
+    expected_colors = extract_colors_from_clicks(click_events)
     
-    # unique_colors = filter_duplicate_colors(expected_colors)
-    # print(f'unique_colors are {unique_colors}, {len(unique_colors)}')
+    print(f'Coordinates are {coordinates}')   
+    # Hardcoding unique colors for this example
+    unique_colors = [
+        (129, 134, 8), (195, 145, 136), (196, 149, 141), 
+        (78, 51, 46), (163, 118, 98), (163, 114, 75), 
+        (198, 160, 142), (161, 110, 71), (170, 110, 100)
+    ]
 
+    tolerance = 10  # Define tolerance for color matching
 
+    for coordinate in coordinates:
+        # Ensure coordinates are integers
+        x, y = map(int, coordinate)  # Convert to integers if needed
 
-    ## move to own function?
+        try:
+            # Get the color at the coordinate
+            pyautogui.moveTo(x, y, duration=1, tween=pyautogui.easeInQuad)
+            current_color = pyautogui.pixel(x, y)
+            print(f'Checking coordinate ({x}, {y})')
+            print(f'  Retrieved color: {current_color}')
+
+            # Check if the color matches one of the unique colors
+            matching_color = is_color_in_samples(current_color, unique_colors, tolerance)
+            if matching_color:
+                print(f'  Color {current_color} matches the sample {matching_color} with tolerance {tolerance}. Action required: Click!')
+            else:
+                print(f'  Color {current_color} does not match any of the samples. Action required: Do not click.')
+
+        except Exception as e:
+            print(f'Error at coordinate ({x}, {y}): {e}')
+
+    # 
     # 
 
     # Paths and Locations Data
@@ -191,7 +233,8 @@ def main():
     # save_log_data(log_data, log_record_path)
 
 
-    pre_check_click_colors('default_name.json')
-#     
+    # pre_check_click_colors('default_name.json')
 if __name__ == "__main__":
     main()
+
+ 
