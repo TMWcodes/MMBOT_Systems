@@ -9,9 +9,24 @@ import os
 from math import sqrt
 
 
-log_data=[]
-# color = check_color()
-start_time = time() 
+def setup_logging(filename):
+    log_dir = os.path.join(os.path.dirname(__file__), 'log_records')
+    os.makedirs(log_dir, exist_ok=True)
+    base_filename = os.path.splitext(filename)[0]
+    log_record_path = os.path.join(log_dir, f'{base_filename}_log.json')
+
+    i = 1
+    while os.path.exists(log_record_path):
+        log_record_path = os.path.join(log_dir, f'{base_filename}_log_{i}.json')
+        i += 1
+
+    return log_record_path
+
+
+def save_log_data(log_data, log_record_path):
+    with open(log_record_path, 'w') as log_file:
+        json.dump(log_data, log_file, indent=4)
+    print(f"Log data saved to: {log_record_path}")
 
 
 def log_action(log_data, coordinates, color, elapsed_time):
@@ -23,217 +38,143 @@ def log_action(log_data, coordinates, color, elapsed_time):
         'color': color
     })
 
-def setup_logging(filename):
-    # Directory of the current script
-    script_dir = os.path.dirname(__file__)
-    
-    # Path to the log directory within the script directory
-    log_dir = os.path.join(script_dir, 'log_records')
-    os.makedirs(log_dir, exist_ok=True)  # Create the log_records directory if it doesn't exist
-    
-    # Base filename for the log file
-    base_filename = os.path.splitext(filename)[0]
-    log_record_path = os.path.join(log_dir, f'{base_filename}_log.json')
-    
-    # Ensure the log file name is unique
-    if os.path.exists(log_record_path):
-        i = 1
-        new_log_record_path = log_record_path
-        while os.path.exists(new_log_record_path):
-            new_log_record_path = os.path.join(log_dir, f'{base_filename}_log_{i}.json')
-            i += 1
-        log_record_path = new_log_record_path
-    
-    return log_record_path
-
-def save_log_data(log_data, log_record_path):
-    # Save the log data to the specified JSON file
-    with open(log_record_path, 'w') as log_file:
-        json.dump(log_data, log_file, indent=4)
-    print(f"Log data saved to: {log_record_path}")
-
-def load_coordinates(events, ignore_moves=False):
-    coordinates = []
-    for event in events:
-        if ignore_moves and event.get('type') == 'move':
-            continue
-        pos = event.get('pos')
-        if pos and isinstance(pos, list) and len(pos) == 2:
-            coordinates.append(pos)
-    return np.array(coordinates)
-
-def extract_colors_from_clicks(click_events):
-    colors = []
-    for event in click_events:
-        if event.get('color'):
-            colors.append(tuple(event['color']))  # Convert list to tuple
-    return colors
-
-def filter_duplicate_colors(colors):
-    # Convert list to a set to remove duplicates, then back to a list
-    unique_colors = list(set(colors))
-    return unique_colors
-
-
-def check_and_click_if_color_matches(coordinate, expected_colors, idx, click_delay=0.1):
-    """
-    Checks the color at a given coordinate and clicks if it matches the expected color.
-    
-    Parameters:
-    - coordinate: A tuple (x, y) representing the screen coordinates.
-    - expected_colors: A list of tuples (R, G, B) representing expected colors.
-    - idx: The index of the current coordinate in the loop.
-    - click_delay: Delay in seconds to wait before clicking.
-    """
-    if idx < len(expected_colors):
-        expected_color = expected_colors[idx]
-        
-        # Move to the coordinate and check the color
-        pyautogui.moveTo(coordinate[0], coordinate[1])
-        if compare_colors(coordinate, expected_color):
-            print(f'Color at {coordinate} matches the expected color {expected_color}.')
-            pyautogui.click()
-            print(f'Clicked at {coordinate}.')
-            sleep(click_delay)  # Optional delay after clicking
-        else:
-            print(f'Color at {coordinate} does not match the expected color {expected_color}.')
-    else:
-        print(f'No expected color for coordinate {coordinate}')
-
-def is_expected_color(color, expected_colors):
-    return color in expected_colors
-
-def click_if_color_matches(expected_colors):
-    x, y = pyautogui.position()
-    color = pyautogui.pixel(x, y)
-
-    if is_expected_color(color, expected_colors):
-        print(f"Color {color} matches expected colors. Clicking at ({x}, {y})...")
-        pyautogui.click(x, y)
-    else:
-        print(f"Color {color} does not match. Skipping click at ({x}, {y}).")
-
-
-def coordinates_to_path(coordinates_array):
-    # Convert each coordinate in the numpy array to a dictionary
-    path = [{'x': int(coord[0]), 'y': int(coord[1])} for coord in coordinates_array]
-    return path
-
-paths_dict = {
-    'path1': [{'x': 100, 'y': 200}, {'x': 150, 'y': 250}],
-    'path2': [{'x': 300, 'y': 400}, {'x': 350, 'y': 450}],
-    }
-
-def move_to_and_click(x, y):
-    pyautogui.moveTo(x, y, duration=1, tween=pyautogui.easeInQuad)
-    pyautogui.click()
-
-def perform_path_navigation(path_name, path, log_data):
-    print(f"Performing path navigation: {path_name}")
-    for point in path:
-        x, y = point['x'], point['y']
-        print(f"Moving to {x}, {y}")
-        move_to_and_click(x, y)
-        # Log the action
-        start_time = time()
-        color = pyautogui.screenshot().getpixel((x, y))
-        elapsed_time = time() - start_time
-        log_action(log_data, (x, y), color, elapsed_time)
-        # Simulate delay
-        sleep(random.uniform(1, 3))  # Random delay
-
 
 ####
+def load_coordinates(events, ignore_moves=False):
+    return np.array([
+        event.get('pos') for event in events 
+        if not (ignore_moves and event.get('type') == 'move') and event.get('pos') and len(event.get('pos')) == 2
+    ])
 
-def pre_check_click_colors(filename):
-    # Load events from the JSON file
-    events = load_json(filename)
-    
-    # Load coordinates and extract colors from clicks
-    coordinates = load_coordinates(events, True)
-    click_events = filter_clicks(events)
-    expected_colors = extract_colors_from_clicks(click_events)
-    
 
-    print(f'Coordinates are {coordinates}')
-    print(f'Expected colors are {expected_colors}, {len(expected_colors)}')
+def extract_colors_from_clicks(click_events):
+    return [tuple(event['color']) for event in click_events if event.get('color')]
 
-    # Iterate over the coordinates and check/click if the color matches
-    for idx, coord in enumerate(coordinates):
-        coordinate = (int(coord[0]), int(coord[1]))
-        check_and_click_if_color_matches(coordinate, expected_colors, idx)
+
+def filter_duplicate_colors(colors):
+    return list(set(colors))
+
 
 def are_colors_similar(color1, color2, tolerance):
-    distance = sqrt(sum((comp1 - comp2) ** 2 for comp1, comp2 in zip(color1, color2)))
-    return distance <= tolerance
+    return sqrt(sum((comp1 - comp2) ** 2 for comp1, comp2 in zip(color1, color2))) <= tolerance
 
-# Step 2: Define a function that checks if a color matches any in the sample set
+
 def is_color_in_samples(color, samples, tolerance):
     for sample in samples:
         if are_colors_similar(color, sample, tolerance):
-            return sample  # Return the matching sample
-    return None  # 
+            return sample
+    return None
 
 
-
-def main():
-    filename = "hard_color_sample_2.json"
-    events = load_json(filename)
-    
-    # Load coordinates 
-    coordinates = load_coordinates(events, True)
-
-    # Extract colors from clicks
-    click_events = filter_clicks(events)
-    expected_colors = extract_colors_from_clicks(click_events)
-    
-    print(f'Coordinates are {coordinates}')   
-    # Hardcoding unique colors for this example
-    unique_colors = [
-        (129, 134, 8), (195, 145, 136), (196, 149, 141), 
-        (78, 51, 46), (163, 118, 98), (163, 114, 75), 
-        (198, 160, 142), (161, 110, 71), (170, 110, 100)
-    ]
-
-    tolerance = 10  # Define tolerance for color matching
-
+def process_coordinates(coordinates, unique_colors, tolerance=10):
     for coordinate in coordinates:
-        # Ensure coordinates are integers
-        x, y = map(int, coordinate)  # Convert to integers if needed
-
+        x, y = map(int, coordinate)
         try:
-            # Get the color at the coordinate
             pyautogui.moveTo(x, y, duration=1, tween=pyautogui.easeInQuad)
             current_color = pyautogui.pixel(x, y)
             print(f'Checking coordinate ({x}, {y})')
             print(f'  Retrieved color: {current_color}')
 
-            # Check if the color matches one of the unique colors
             matching_color = is_color_in_samples(current_color, unique_colors, tolerance)
             if matching_color:
                 print(f'  Color {current_color} matches the sample {matching_color} with tolerance {tolerance}. Action required: Click!')
+                pyautogui.click()
             else:
                 print(f'  Color {current_color} does not match any of the samples. Action required: Do not click.')
 
         except Exception as e:
             print(f'Error at coordinate ({x}, {y}): {e}')
 
-    # 
-    # 
 
-    # Paths and Locations Data
- 
-    # path = coordinates_to_path(coordinates)
-    # print(path)
-    # path_name = "example_path"
-    # log_data = []
-    # perform_path_navigation(path_name, path, log_data)
-    # filesave = 'main'
-    # log_record_path = setup_logging(filesave)
-    # save_log_data(log_data, log_record_path)
+def check_colors_and_click(filename, unique_colors, match_by_index=False, click_delay=0.1, tolerance=10):
+    """
+    Checks colors at coordinates and clicks if they match.
+    
+    Parameters:
+    - filename: The name of the JSON file containing the events.
+    - unique_colors: A list of unique colors to match against.
+    - match_by_index: If True, matches colors by index (original functionality). If False, matches against unique colors.
+    - click_delay: Delay in seconds to wait before clicking (optional).
+    - tolerance: The tolerance level for color matching (optional).
+    """
+    events = load_json(filename)
+    coordinates = load_coordinates(events, True)
+    expected_colors = extract_colors_from_clicks(filter_clicks(events))
+    
+    if match_by_index:
+        print("Matching colors by index...")
+        # Match colors by index, using the original functionality
+        for idx, coordinate in enumerate(coordinates):
+            if idx < len(expected_colors):
+                expected_color = expected_colors[idx]
+                x, y = map(int, coordinate)
+                
+                try:
+                    pyautogui.moveTo(x, y, duration=1, tween=pyautogui.easeInQuad)
+                    current_color = pyautogui.pixel(x, y)
+
+                    if are_colors_similar(current_color, expected_color, tolerance):
+                        print(f'Color at {coordinate} matches the expected color {expected_color}. Clicking...')
+                        pyautogui.click()
+                        sleep(click_delay)
+                    else:
+                        print(f'Color at {coordinate} does not match the expected color {expected_color}. No action taken.')
+                except Exception as e:
+                    print(f'Error at coordinate ({x}, {y}): {e}')
+            else:
+                print(f'No expected color for coordinate {coordinate}')
+    else:
+        print("Matching against unique colors...")
+        # Match colors against the unique colors, using the refactored functionality
+        process_coordinates(coordinates, unique_colors, tolerance)
+
+def extract_and_export_data(filename, output_filename=None):
+    # Load events from the JSON file
+    events = load_json(filename)
+    
+    # Load coordinates
+    coordinates = load_coordinates(events, True)
+    
+    # Extract click events
+    click_events = filter_clicks(events)
+    
+    # Extract colors and filter unique colors
+    expected_colors = extract_colors_from_clicks(click_events)
+    unique_colors = filter_duplicate_colors(expected_colors)
+    
+    # If output_filename is not provided, create one based on input filename
+    if output_filename is None:
+        output_filename = f"{os.path.splitext(filename)[0]}_coordinate_and_color_data.txt"
+
+    # Export the data to text file
+    with open(output_filename, 'w') as file:
+        # Write coordinates
+        file.write(f"{filename} coordinate and color data:\n\n")
+        
+        file.write("Coordinates:\n")
+        for coord in coordinates:
+            file.write(f"{coord[0]}, {coord[1]}\n")
+
+        file.write("\nUnique Colors:\n")
+        
+        # Format unique colors as a single line
+        formatted_colors = ", ".join(f"({color[0]}, {color[1]}, {color[2]})" for color in unique_colors)
+        file.write(f"[{formatted_colors}]\n")
+
+    print(f"Data exported to {output_filename}")
+
+# Example usage
+
+def main():
+   
+#    creates file with coordinates and unique colors
+    # extract_and_export_data("hard_color_sample.json")
+    unique_colors = [(129, 134, 8), (195, 145, 136), (196, 149, 141), (78, 51, 46), (163, 118, 98), (163, 114, 75), (198, 160, 142), (161, 110, 71), (170, 110, 100)]
 
 
-    # pre_check_click_colors('default_name.json')
+    # checks against unique colors
+    # process_coordinates("hard_color_sample_2.json")
+    check_colors_and_click("hard_color_sample.json", unique_colors, match_by_index=True, click_delay=0.1, tolerance=0)
 if __name__ == "__main__":
     main()
 
