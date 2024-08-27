@@ -1,13 +1,14 @@
 import pyautogui
 from time import time, sleep
 import random
-from my_utils import holdKey,initialize_pyautogui, count_down_timer, compare_colors, check_color, vary_coordinates
+from my_utils import holdKey, initialize_pyautogui, compare_colors, check_color
 from data import load_json, filter_clicks
 import json
 import numpy as np
 import os
 from math import sqrt
-
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
 def setup_logging(filename):
     log_dir = os.path.join(os.path.dirname(__file__), 'log_records')
@@ -39,7 +40,6 @@ def log_action(log_data, coordinates, color, elapsed_time):
     })
 
 
-####
 def load_coordinates(events, ignore_moves=False):
     return np.array([
         event.get('pos') for event in events 
@@ -56,8 +56,8 @@ def filter_duplicate_colors(colors):
 
 
 def are_colors_similar(color1, color2, tolerance):
-    return sqrt(sum((comp1 - comp2) ** 2 for comp1, comp2 in zip(color1, color2))) <= tolerance
-
+    squared_distance = sum((comp1 - comp2) ** 2 for comp1, comp2 in zip(color1, color2))
+    return squared_distance <= tolerance ** 2
 
 def is_color_in_samples(color, samples, tolerance):
     for sample in samples:
@@ -163,18 +163,84 @@ def extract_and_export_data(filename, output_filename=None):
 
     print(f"Data exported to {output_filename}")
 
+
+def find_and_move_to_color(color_samples, tolerance=10, region=None, sample_count=100):
+    """
+    Move the mouse to the first screen position that matches one of the given color samples.
+    
+    Parameters:
+    - color_samples: List of tuples (R, G, B) representing color samples to search for.
+    - tolerance: Tolerance level for color matching.
+    """
+    screen = pyautogui.screenshot(region=region)
+    pixel_map = screen.load()
+    width, height = screen.size
+
+    sample_positions = [(random.randint(0, width - 1), random.randint(0, height - 1)) for _ in range(sample_count)]
+
+    for x, y in sample_positions:
+        pixel_color = pixel_map[x, y]
+        for color in color_samples:
+            if are_colors_similar(pixel_color, color, tolerance):
+                print(f"Color match found at ({x}, {y})")
+                print(f"  Pixel color: {pixel_color}")
+                print(f"  Matching sample color: {color}")
+                pyautogui.moveTo(x, y)
+                display_color(pixel_color)
+                return  # Exit after the first match is found
+
+    print("No matching color found on the screen.")
 # Example usage
+
+def display_color(color):
+    """
+    Create and display a plot with a solid color.
+
+    Parameters:
+    - color: A tuple (R, G, B) representing the RGB color to display.
+    """
+    normalized_color = tuple(component / 255.0 for component in color)  # Move the mouse to the matching color
+
+    # Create a figure and axis
+    fig, ax = plt.subplots()
+    
+    # Create a square patch with the color
+    square = patches.Rectangle((0, 0), 1, 1, color=normalized_color)
+    ax.add_patch(square)
+    
+    # Set limits and aspect
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_aspect('equal')
+    
+    # Remove axis
+    ax.axis('off')
+    
+    # Display the plot
+    plt.show()
 
 def main():
    
 #    creates file with coordinates and unique colors
     # extract_and_export_data("hard_color_sample.json")
-    unique_colors = [(129, 134, 8), (195, 145, 136), (196, 149, 141), (78, 51, 46), (163, 118, 98), (163, 114, 75), (198, 160, 142), (161, 110, 71), (170, 110, 100)]
-
+    # filename = 'hard_color_sample_2.json'
+    # unique_colors = [(129, 134, 8), (195, 145, 136), (196, 149, 141), (78, 51, 46), (163, 118, 98), (163, 114, 75), (198, 160, 142), (161, 110, 71), (170, 110, 100)]
 
     # checks against unique colors
     # process_coordinates("hard_color_sample_2.json")
-    check_colors_and_click("hard_color_sample.json", unique_colors, match_by_index=True, click_delay=0.1, tolerance=0)
+    # check_colors_and_click(filename, unique_colors, match_by_index=False, click_delay=0.1, tolerance=10)
+
+
+    color_samples = [(129, 134, 8), (195, 145, 136), (196, 149, 141), (78, 51, 46), (163, 118, 98), (163, 114, 75), (198, 160, 142), (161, 110, 71), (170, 110, 100)]
+    find_and_move_to_color(color_samples, tolerance=10, sample_count=100)
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
     main()
 
