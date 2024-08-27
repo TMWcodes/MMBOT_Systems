@@ -93,11 +93,44 @@ def check_color(coordinates, delay=0.1):
 
     return pixel_color
 
-def compare_colors(coordinates=(1741,95), expected_color=(33, 37, 43)):
-    match = pyautogui.pixelMatchesColor(coordinates[0],coordinates[1], (expected_color))
-    if match == False:
-        print("does not match expected color")
+def compare_colors(coordinate, expected_color):
+    """
+    Compares the color at a given coordinate with the expected color.
+    
+    Parameters:
+    - coordinate: A tuple (x, y) representing the screen coordinates.
+    - expected_color: A tuple (R, G, B) representing the expected color.
+    
+    Returns:
+    - bool: True if the color matches, False otherwise.
+    """
+    print(f"Checking color at coordinate: {coordinate}")
+    print(f"Expected color: {expected_color}")
+
+    # Validate coordinate
+    if not (isinstance(coordinate, tuple) and len(coordinate) == 2 and all(isinstance(c, int) for c in coordinate)):
+        print(f"Invalid coordinate format: {coordinate}")
+        return False
+
+    # Validate expected color
+    if not (isinstance(expected_color, tuple) and len(expected_color) == 3 and all(isinstance(c, int) for c in expected_color)):
+        print(f"Invalid color format: {expected_color}")
+        return False
+
+    try:
+        # Retrieve the current color at the coordinate
+        current_color = pyautogui.pixel(coordinate[0], coordinate[1])
+        print(f"Actual color at {coordinate}: {current_color}")
+        
+        # Compare the current color with the expected color
+        match = pyautogui.pixelMatchesColor(coordinate[0], coordinate[1], expected_color, tolerance=10)
+    except Exception as e:
+        print(f"Error checking color: {e}")
+        return False
+
+    if match:
+        print(f"Color at {coordinate} matches expected value {expected_color}.")
     else:
-        print("color matches expected value."
-        )
- 
+        print(f"Color at {coordinate} does not match expected color {expected_color}.")
+
+    return match
