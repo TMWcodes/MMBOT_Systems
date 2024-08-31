@@ -75,11 +75,11 @@ Screenshots of the GUI and output screens will be provided to illustrate the app
 
 #### Table
 
-see recorded data via table view display screen
-![Screenshot](.\images\TableView_json.png)
+- see recorded data via table view display screen
+  ![Screenshot](./images/TableView_json.png)
 
-see stat comparison via statistics display screen
-![Screenshot](.\images\Compare_json_stats.png)
+- see stat comparison via statistics display screen
+  ![Screenshot](./images/Compare_json_stats.png)
 
 ## License
 
