@@ -26,9 +26,8 @@ def load_json(filename):
     
     # If file is not found in both directories
     raise FileNotFoundError(f"File '{filename}' not found in 'recordings' or 'log_records' directories.")
-# Load coordinates from JSON data with an option to ignore move actions
 
-
+#  transforms lists of coordinate dictionaries into NumPy arrays
 def load_coordinates_from_dicts(coordinates_list):
     coordinates = [[coord['x'], coord['y']] for coord in coordinates_list]
     return np.array(coordinates)

@@ -1,28 +1,13 @@
 import pyautogui
 import os
 from time import sleep
-
+from hard_coded import are_colors_similar
       
 def create_screenshot():
     filename = 'test_screenshot.png'
     script_dir = os.path.dirname(__file__)
     file_path = os.path.join(script_dir, "..", 'images', filename)
     pyautogui.screenshot(file_path)
-
-
-def screen_image(filename="edit.PNG"):
-    
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    image_path = os.path.join(script_dir, "..", "images", filename)
-    res = pyautogui.locateOnScreen(image_path)
-    if res is not None:
-        print("Image found at:", res)
-        icon = pyautogui.center(res)
-        print(f"moving mouse to {icon}")
-        pyautogui.moveTo(icon)
-
-    else:
-        print("Image not found.")
 
 def new_tab_search(web_address="www.youtube.com"):
     sleep(2)
@@ -52,18 +37,22 @@ def found_img_message(filename="edit.PNG"):
     else:
         print("Image not found.")
 
-locations = [
-    {
-        "edit": ["edit.png", "edit.PNG"]
-    },
-    {
-        "subscribe": ["subscribe.PNG", "like.PNG", "icon_yt.PNG"]
-    },
-    {
-        "menu": ["menu_image1.png", "menu_image2.png"]
-    }
-]
+def screen_image(filename="edit.PNG"):
+    
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    image_path = os.path.join(script_dir, "..", "images", filename)
+    res = pyautogui.locateOnScreen(image_path)
+    if res is not None:
+        print("Image found at:", res)
+        icon = pyautogui.center(res)
+        print(f"moving mouse to {icon}")
+        pyautogui.moveTo(icon)
+
+    else:
+        print("Image not found.")
+
 def get_starting_position(locations, target_key):
+
     for dictionary in locations:
         if target_key in dictionary:
             values = dictionary[target_key]
@@ -73,12 +62,9 @@ def get_starting_position(locations, target_key):
                 image_path = os.path.join(script_dir, "..", "images", value)
                 img = pyautogui.locateCenterOnScreen(image_path, confidence=0.9)
                 if img is not None:
-                    print(img) # Point(x=1330, y=17)
+                    print(f"Found image {value} at {img}")
+                    return True  # Found the image, return True
                 else:
-                    print("Image not found.")
-
-# Example usage:
-
-# new_tab_search()
+                    print(f"Image {value} not found.")
+    return False  # None of the images were found, return False
 #
-get_starting_position(locations, "subscribe") # works in locate

@@ -128,6 +128,7 @@ def check_colors_and_click(filename, unique_colors, match_by_index=False, click_
         # Match colors against the unique colors, using the refactored functionality
         process_coordinates(coordinates, unique_colors, tolerance)
 
+#    creates file with coordinates and unique colors
 def extract_and_export_data(filename, output_filename=None):
     # Load events from the JSON file
     events = load_json(filename)
@@ -182,15 +183,14 @@ def find_and_move_to_color(color_samples, tolerance=10, region=None, sample_coun
         pixel_color = pixel_map[x, y]
         for color in color_samples:
             if are_colors_similar(pixel_color, color, tolerance):
-                print(f"Color match found at ({x}, {y})")
-                print(f"  Pixel color: {pixel_color}")
-                print(f"  Matching sample color: {color}")
+                print(f"Color match, Pixel color: {pixel_color}, found at ({x}, {y})")
+                print(f"  Matches sample color: {color}")
                 pyautogui.moveTo(x, y)
-                display_color(pixel_color)
+                # display_color(pixel_color)
                 return  # Exit after the first match is found
 
     print("No matching color found on the screen.")
-# Example usage
+
 
 def display_color(color):
     """
@@ -221,7 +221,6 @@ def display_color(color):
 
 def main():
    
-#    creates file with coordinates and unique colors
     # extract_and_export_data("hard_color_sample.json")
     # filename = 'hard_color_sample_2.json'
     # unique_colors = [(129, 134, 8), (195, 145, 136), (196, 149, 141), (78, 51, 46), (163, 118, 98), (163, 114, 75), (198, 160, 142), (161, 110, 71), (170, 110, 100)]

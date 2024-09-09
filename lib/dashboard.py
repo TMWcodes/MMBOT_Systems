@@ -298,7 +298,6 @@ def on_mouse_wheel(event):
     canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
 
-###
 def display_dataframe_in_treeview(df, parent_frame):
     for widget in parent_frame.winfo_children():
         widget.destroy()

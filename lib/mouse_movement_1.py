@@ -17,8 +17,6 @@ def move_mouse_with_easing(points, duration, easing_function):
         pyautogui.moveTo(point[0], point[1], duration, easing_function)
         time.sleep(0.05)  # Adjust sleep time if needed for smoother movement
 
-
-
 # Function to generate random control points for mouse movement
 def generate_control_points(start_position, end_position):
     # Randomly select the number of control points (between 3 and 5)
@@ -57,7 +55,6 @@ def generate_spline_path(start_position, end_position):
     points = interpolate.splev(u, tck)
     return points
 
-# #####BREAK######
 
 def create_bezier_path(start_pos, end_pos, num_control_points=4, randomness=10, degree=3):
     x1, y1 = start_pos

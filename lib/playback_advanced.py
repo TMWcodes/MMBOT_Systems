@@ -36,7 +36,7 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
                 if action['type'] == EventType.KEYDOWN:
                     key = convertKey(action['button'])
                     pyautogui.keyDown(key)
-                    print(f"keyDown on {action['button']}")
+                    # print(f"keyDown on {action['button']}")
 
                     # Log keyDown event
                     log_data.append({
@@ -50,7 +50,7 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
                 elif action['type'] == EventType.KEYUP:
                     key = convertKey(action['button'])
                     pyautogui.keyUp(key)
-                    print(f"keyUp on {action['button']}")
+                    # print(f"keyUp on {action['button']}")
 
                     # Log keyUp event
                     log_data.append({
@@ -105,7 +105,7 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
                 # Adjust the sleep time to align with the original timing
                 adjusted_sleep_time = max(expected_time - actual_elapsed_total, 0)
 
-                print(f"\nProcessing action: {action['type']} at {action.get('pos', 'None')}")
+                print(f"\nProcessing action: {action['button']}, {action['type']} at {action.get('pos', 'None')}")
                 print(f"Expected time: {expected_time}")
                 print(f"Actual elapsed time since start: {actual_elapsed_total}")
                 print(f"Adjusted sleep time: {adjusted_sleep_time} seconds (after correction)")
@@ -159,7 +159,7 @@ def convertKey(button):
     }
 
     cleaned_key = button.replace('Key.', '')
-    print(cleaned_key)
+    # print(cleaned_key)
     if cleaned_key in PYNPUT_SPECIAL_CASE_MAP:
         return PYNPUT_SPECIAL_CASE_MAP[cleaned_key]
 
