@@ -11,41 +11,8 @@ from controller import (
 )
 import numpy as np
 import os
+from file_operations import add_files, remove_selected, move_down, move_up
 
-def add_files():
-    filenames = select_files()
-    for filename in filenames:
-        file_listbox.insert(tk.END, filename)
-
-def remove_selected():
-    items = list(file_listbox.get(0, tk.END))
-    selected_indices = file_listbox.curselection()
-    new_items = remove_items_from_list(items, selected_indices)
-    file_listbox.delete(0, tk.END)
-    for item in new_items:
-        file_listbox.insert(tk.END, item)
-
-def move_up():
-    items = list(file_listbox.get(0, tk.END))
-    selected_indices = file_listbox.curselection()
-    new_items = move_item_up(items, selected_indices)
-    file_listbox.delete(0, tk.END)
-    for item in new_items:
-        file_listbox.insert(tk.END, item)
-    for index in selected_indices:
-        if index > 0:
-            file_listbox.selection_set(index - 1)
-
-def move_down():
-    items = list(file_listbox.get(0, tk.END))
-    selected_indices = file_listbox.curselection()
-    new_items = move_item_down(items, selected_indices)
-    file_listbox.delete(0, tk.END)
-    for item in new_items:
-        file_listbox.insert(tk.END, item)
-    for index in selected_indices:
-        if index < len(new_items) - 1:
-            file_listbox.selection_set(index + 1)
 
 def play_selected_actions():
     filenames = file_listbox.get(0, tk.END)
@@ -375,10 +342,10 @@ file_listbox = tk.Listbox(scrollable_frame, selectmode=tk.MULTIPLE, width=100, h
 file_listbox.pack(pady=10)
 
 # Buttons
-add_files_button = tk.Button(scrollable_frame, text="Add JSON Files", command=add_files)
-remove_files_button = tk.Button(scrollable_frame, text="Remove Selected", command=remove_selected)
-move_up_button = tk.Button(scrollable_frame, text="Move Up", command=move_up)
-move_down_button = tk.Button(scrollable_frame, text="Move Down", command=move_down)
+add_files_button = tk.Button(scrollable_frame, text="Add JSON Files", command=lambda: add_files(file_listbox))
+remove_files_button = tk.Button(scrollable_frame, text="Remove Selected", command=lambda: remove_selected(file_listbox))
+move_up_button = tk.Button(scrollable_frame, text="Move Up", command=lambda: move_up(file_listbox))
+move_down_button = tk.Button(scrollable_frame, text="Move Down", command=lambda: move_down(file_listbox))
 merge_json_button = tk.Button(scrollable_frame, text="Merge JSON Files", command=merge_json_files_action)
 play_record_button = tk.Button(scrollable_frame, text="Play Selected Actions", command=play_selected_actions)
 start_record_button = tk.Button(scrollable_frame, text="Start Key Logger", command=start_key_logger_with_filename)
