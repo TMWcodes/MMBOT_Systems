@@ -8,3 +8,13 @@ testing.md
 testing.py
 system.py
 data.md
+actions_test_01.json
+*.json
+*.md
+!movement_test.json
+
+__pycache__
+.pytest_cache
+errors.md
+tech_tree.py
+reddit_macro.py

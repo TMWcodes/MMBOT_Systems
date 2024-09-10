@@ -11,7 +11,7 @@ from controller import (
 )
 import numpy as np
 import os
-from file_operations import add_files, remove_selected, move_down, move_up
+from file_operations import add_files, remove_selected, move_down, move_up, merge_json_files_action
 
 
 def play_selected_actions():
@@ -177,29 +177,6 @@ def display_shannon_entropy():
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
 
-def merge_json_files_action():
-    # Get selected files from the listbox
-    selected_files = file_listbox.curselection()
-    if len(selected_files) < 2:  # Ensure at least two files are selected for merging
-        messagebox.showerror("Error", "Please select at least two files to merge.")
-        return
-
-    # Get the filenames from the selected indices
-    filenames = [file_listbox.get(i) for i in selected_files]
-
-    # Ask the user for an output filename
-    output_filename = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
-    if not output_filename:
-        return
-
-    # Call the controller function to merge the selected files
-    success = merge_selected_json_files(filenames, output_filename)
-    
-    if success:
-        messagebox.showinfo("Success", f"Merged JSON files into {output_filename}")
-    else:
-        messagebox.showerror("Error", "An error occurred while merging files.")
-
 def plot_autocorrelation_for_selected():
     selected_files = file_listbox.curselection()
     if len(selected_files) != 1:
@@ -346,7 +323,7 @@ add_files_button = tk.Button(scrollable_frame, text="Add JSON Files", command=la
 remove_files_button = tk.Button(scrollable_frame, text="Remove Selected", command=lambda: remove_selected(file_listbox))
 move_up_button = tk.Button(scrollable_frame, text="Move Up", command=lambda: move_up(file_listbox))
 move_down_button = tk.Button(scrollable_frame, text="Move Down", command=lambda: move_down(file_listbox))
-merge_json_button = tk.Button(scrollable_frame, text="Merge JSON Files", command=merge_json_files_action)
+merge_files_button = tk.Button(scrollable_frame, text="Merge Files", command=lambda: merge_json_files_action(file_listbox))
 play_record_button = tk.Button(scrollable_frame, text="Play Selected Actions", command=play_selected_actions)
 start_record_button = tk.Button(scrollable_frame, text="Start Key Logger", command=start_key_logger_with_filename)
 repeated_sequences_button = tk.Button(scrollable_frame, text="Analyze Repeated Sequences", command=analyze_repeated_sequences)
@@ -363,7 +340,7 @@ add_files_button.pack(pady=5)
 remove_files_button.pack(pady=5)
 move_up_button.pack(pady=5)
 move_down_button.pack(pady=5)
-merge_json_button.pack(pady=5)
+merge_files_button.pack(pady=5)
 play_record_button.pack(pady=20)
 start_record_button.pack(pady=20)
 compare_json_button.pack(pady=20)

@@ -214,27 +214,37 @@ def process_shannon_entropy(file_path):
 
 def merge_selected_json_files(filenames, output_filename):
     try:
+        print("Merging files:", filenames)  # Debug print
         merged_data = []
         last_time = 0
 
         for filename in filenames:
+            if not os.path.isfile(filename):
+                raise FileNotFoundError(f"The file {filename} does not exist.")
+            
             with open(filename, 'r') as file:
                 data = json.load(file)
                 
-                # Adjust the time in the current file's data
                 for entry in data:
-                    entry['time'] += last_time
+                    if 'time' in entry:
+                        entry['time'] += last_time
                 
                 merged_data.extend(data)
-                last_time = merged_data[-1]['time']
+                if merged_data:
+                    last_time = merged_data[-1].get('time', last_time)
 
-        # Save the merged data to the output file
         with open(output_filename, 'w') as outfile:
             json.dump(merged_data, outfile, indent=2)
 
         return True
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        return False
+    except json.JSONDecodeError as e:
+        print(f"JSON decode error: {e}")
+        return False
     except Exception as e:
-        print(f"Error merging files: {e}")
+        print(f"Unexpected error: {e}")
         return False
     
 def plot_autocorrelation_from_file(file_path, repetitions):
