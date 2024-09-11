@@ -12,6 +12,7 @@ from controller import (
 import numpy as np
 import os
 from file_operations import add_files, remove_selected, move_down, move_up, merge_json_files_action
+from ui import setup_ui
 
 
 def play_selected_actions():
@@ -260,7 +261,7 @@ def display_dataframe_in_treeview(df, parent_frame):
         tree.insert("", "end", values=list(row))
 
 # Function to load and display JSON data
-def load_and_display_json():
+def load_and_display_json(table_tree):
     # Get the selected items from the listbox
     selected_files = file_listbox.curselection()
 
@@ -290,128 +291,166 @@ def load_and_display_json():
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
 ###
-root = tk.Tk()
-root.title("Dashboard")
 
-# Create a frame for the left side (file list and buttons)
-left_frame = tk.Frame(root)
-left_frame.pack(side="left", fill="both", expand=True)
 
-canvas = tk.Canvas(left_frame)
-scrollbar = ttk.Scrollbar(left_frame, orient="vertical", command=canvas.yview)
-scrollable_frame = ttk.Frame(canvas)
 
-def on_frame_configure(event):
-    canvas.configure(scrollregion=canvas.bbox("all"))
+def main():
+    global file_listbox, stats_text, time_var, color_var, pos_var
 
-scrollable_frame.bind("<Configure>", on_frame_configure)
+    root = tk.Tk()
 
-# Add scrollable frame to canvas
-canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-canvas.pack(side="left", fill="both", expand=True)
-scrollbar.pack(side="right", fill="y")
-canvas.configure(yscrollcommand=scrollbar.set)
+    # Define handlers to pass to the UI setup
+    handlers = {
+        'add_files': lambda: add_files(file_listbox),
+        'remove_selected': lambda: remove_selected(file_listbox),
+        'move_up': lambda: move_up(file_listbox),
+        'move_down': lambda: move_down(file_listbox),
+        'merge_json_files_action': lambda: merge_json_files_action(file_listbox),
+        'play_selected_actions': play_selected_actions,
+        'start_key_logger_with_filename': start_key_logger_with_filename,
+        'analyze_repeated_sequences': analyze_repeated_sequences,
+        'display_repeated_sequences_detailed': display_repeated_sequences_detailed,
+        'compare_selected_json': compare_selected_json,
+        'display_time_stats': display_time_stats,
+        'display_shannon_entropy': display_shannon_entropy,
+        'plot_autocorrelation_for_selected': plot_autocorrelation_for_selected,
+        'perform_clustering': perform_clustering,
+        'load_and_display_json': lambda: load_and_display_json(table_tree)  # Pass table_tree here
+    }
 
-root.bind_all("<MouseWheel>", on_mouse_wheel)
+    file_listbox, table_tree, stats_text, time_var, color_var, pos_var = setup_ui(root, handlers)
 
-# File Listbox
-file_listbox = tk.Listbox(scrollable_frame, selectmode=tk.MULTIPLE, width=100, height=15)
-file_listbox.pack(pady=10)
+    root.mainloop()
 
-# Buttons
-add_files_button = tk.Button(scrollable_frame, text="Add JSON Files", command=lambda: add_files(file_listbox))
-remove_files_button = tk.Button(scrollable_frame, text="Remove Selected", command=lambda: remove_selected(file_listbox))
-move_up_button = tk.Button(scrollable_frame, text="Move Up", command=lambda: move_up(file_listbox))
-move_down_button = tk.Button(scrollable_frame, text="Move Down", command=lambda: move_down(file_listbox))
-merge_files_button = tk.Button(scrollable_frame, text="Merge Files", command=lambda: merge_json_files_action(file_listbox))
-play_record_button = tk.Button(scrollable_frame, text="Play Selected Actions", command=play_selected_actions)
-start_record_button = tk.Button(scrollable_frame, text="Start Key Logger", command=start_key_logger_with_filename)
-repeated_sequences_button = tk.Button(scrollable_frame, text="Analyze Repeated Sequences", command=analyze_repeated_sequences)
-detailed_sequences_button = tk.Button(scrollable_frame, text="View Repeated Sequences", command=display_repeated_sequences_detailed)
-compare_json_button = tk.Button(scrollable_frame, text="Compare Selected JSON", command=compare_selected_json)
-time_stats_button = tk.Button(scrollable_frame, text="Show Time Statistics", command=display_time_stats)
-shannon_entropy_button = tk.Button(scrollable_frame, text="Calculate Shannon Entropy", command=display_shannon_entropy)
+if __name__ == "__main__":
+    main()
 
-autocorrelation_button = tk.Button(scrollable_frame, text="Plot Autocorrelation", command=plot_autocorrelation_for_selected)
-clustering_button = tk.Button(scrollable_frame, text="Cluster Coordinates", command=perform_clustering)
 
-# Pack buttons into scrollable frame
-add_files_button.pack(pady=5)
-remove_files_button.pack(pady=5)
-move_up_button.pack(pady=5)
-move_down_button.pack(pady=5)
-merge_files_button.pack(pady=5)
-play_record_button.pack(pady=20)
-start_record_button.pack(pady=20)
-compare_json_button.pack(pady=20)
-time_stats_button.pack(pady=20)
-repeated_sequences_button.pack(pady=5)
-detailed_sequences_button.pack(pady=5)
-shannon_entropy_button.pack(pady=20)
-autocorrelation_button.pack(pady=20)
-clustering_button.pack(pady=20)
 
-# Create a frame for the display area (right side) and Notebook (Tabbed Interface)
-right_frame = tk.Frame(root)
-right_frame.pack(side="right", fill="both", expand=True)
 
-notebook = ttk.Notebook(right_frame)
-notebook.pack(expand=True, fill="both")
+    
+# root = tk.Tk()
+# root.title("Dashboard")
 
-# Create Frames for each tab
-table_tab = ttk.Frame(notebook)
-stats_tab = ttk.Frame(notebook)
+# # Create a frame for the left side (file list and buttons)
+# left_frame = tk.Frame(root)
+# left_frame.pack(side="left", fill="both", expand=True)
 
-notebook.add(table_tab, text="Table View")
-notebook.add(stats_tab, text="Statistics")
+# canvas = tk.Canvas(left_frame)
+# scrollbar = ttk.Scrollbar(left_frame, orient="vertical", command=canvas.yview)
+# scrollable_frame = ttk.Frame(canvas)
 
-table_tree = ttk.Treeview(table_tab)
+# def on_frame_configure(event):
+#     canvas.configure(scrollregion=canvas.bbox("all"))
 
-# Define the columns
-table_tree['columns'] = ('time', 'type', 'button', 'pos', 'color')
+# scrollable_frame.bind("<Configure>", on_frame_configure)
 
-# Format the columns
-table_tree.column("#0", width=0, stretch=tk.NO)  # Hidden index column
-table_tree.column("time", anchor=tk.W, width=100)
-table_tree.column("type", anchor=tk.W, width=100)
-table_tree.column("button", anchor=tk.W, width=100)
-table_tree.column("pos", anchor=tk.W, width=150)
-table_tree.column("color", anchor=tk.W, width=150)
+# # Add scrollable frame to canvas
+# canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+# canvas.pack(side="left", fill="both", expand=True)
+# scrollbar.pack(side="right", fill="y")
+# canvas.configure(yscrollcommand=scrollbar.set)
 
-# Define headings
-table_tree.heading("#0", text="", anchor=tk.W)  # Hidden index column
-table_tree.heading("time", text="Time", anchor=tk.W)
-table_tree.heading("type", text="Type", anchor=tk.W)
-table_tree.heading("button", text="Button", anchor=tk.W)
-table_tree.heading("pos", text="Position", anchor=tk.W)
-table_tree.heading("color", text="Color", anchor=tk.W)
+# root.bind_all("<MouseWheel>", on_mouse_wheel)
 
-# Add the Treeview to the table_tab with a scrollbar
-table_tree.pack(fill="both", expand=True)
+# # File Listbox
+# file_listbox = tk.Listbox(scrollable_frame, selectmode=tk.MULTIPLE, width=100, height=15)
+# file_listbox.pack(pady=10)
 
-# Create a button to load and display JSON data
-display_json_button = tk.Button(right_frame, text="Display JSON Data", command=load_and_display_json)
-display_json_button.pack(pady=20)
+# # Buttons
+# add_files_button = tk.Button(scrollable_frame, text="Add JSON Files", command=lambda: add_files(file_listbox))
+# remove_files_button = tk.Button(scrollable_frame, text="Remove Selected", command=lambda: remove_selected(file_listbox))
+# move_up_button = tk.Button(scrollable_frame, text="Move Up", command=lambda: move_up(file_listbox))
+# move_down_button = tk.Button(scrollable_frame, text="Move Down", command=lambda: move_down(file_listbox))
+# merge_files_button = tk.Button(scrollable_frame, text="Merge Files", command=lambda: merge_json_files_action(file_listbox))
+# play_record_button = tk.Button(scrollable_frame, text="Play Selected Actions", command=play_selected_actions)
+# start_record_button = tk.Button(scrollable_frame, text="Start Key Logger", command=start_key_logger_with_filename)
+# repeated_sequences_button = tk.Button(scrollable_frame, text="Analyze Repeated Sequences", command=analyze_repeated_sequences)
+# detailed_sequences_button = tk.Button(scrollable_frame, text="View Repeated Sequences", command=display_repeated_sequences_detailed)
+# compare_json_button = tk.Button(scrollable_frame, text="Compare Selected JSON", command=compare_selected_json)
+# time_stats_button = tk.Button(scrollable_frame, text="Show Time Statistics", command=display_time_stats)
+# shannon_entropy_button = tk.Button(scrollable_frame, text="Calculate Shannon Entropy", command=display_shannon_entropy)
 
-# Add stats_text to stats_tab
-stats_text = tk.Text(stats_tab, wrap=tk.WORD, state=tk.DISABLED)
-stats_text.pack(side="left", fill="both", expand=True)
+# autocorrelation_button = tk.Button(scrollable_frame, text="Plot Autocorrelation", command=plot_autocorrelation_for_selected)
+# clustering_button = tk.Button(scrollable_frame, text="Cluster Coordinates", command=perform_clustering)
 
-text_scrollbar = ttk.Scrollbar(stats_tab, orient="vertical", command=stats_text.yview)
-text_scrollbar.pack(side="right", fill="y")
-stats_text.configure(yscrollcommand=text_scrollbar.set)
+# # Pack buttons into scrollable frame
+# add_files_button.pack(pady=5)
+# remove_files_button.pack(pady=5)
+# move_up_button.pack(pady=5)
+# move_down_button.pack(pady=5)
+# merge_files_button.pack(pady=5)
+# play_record_button.pack(pady=20)
+# start_record_button.pack(pady=20)
+# compare_json_button.pack(pady=20)
+# time_stats_button.pack(pady=20)
+# repeated_sequences_button.pack(pady=5)
+# detailed_sequences_button.pack(pady=5)
+# shannon_entropy_button.pack(pady=20)
+# autocorrelation_button.pack(pady=20)
+# clustering_button.pack(pady=20)
 
-# Create checkboxes for comparison options
-comparison_frame = tk.LabelFrame(left_frame, text="Comparison Options", padx=10, pady=10)
-comparison_frame.pack(pady=10)
+# # Create a frame for the display area (right side) and Notebook (Tabbed Interface)
+# right_frame = tk.Frame(root)
+# right_frame.pack(side="right", fill="both", expand=True)
 
-time_var = tk.BooleanVar(value=False)
-color_var = tk.BooleanVar(value=False)
-pos_var = tk.BooleanVar(value=False)
+# notebook = ttk.Notebook(right_frame)
+# notebook.pack(expand=True, fill="both")
 
-tk.Checkbutton(comparison_frame, text="Compare Time", variable=time_var).pack(anchor="w")
-tk.Checkbutton(comparison_frame, text="Compare Color", variable=color_var).pack(anchor="w")
-tk.Checkbutton(comparison_frame, text="Compare Position", variable=pos_var).pack(anchor="w")
+# # Create Frames for each tab
+# table_tab = ttk.Frame(notebook)
+# stats_tab = ttk.Frame(notebook)
 
-# Running the main application loop
-root.mainloop()
+# notebook.add(table_tab, text="Table View")
+# notebook.add(stats_tab, text="Statistics")
+
+# table_tree = ttk.Treeview(table_tab)
+
+# # Define the columns
+# table_tree['columns'] = ('time', 'type', 'button', 'pos', 'color')
+
+# # Format the columns
+# table_tree.column("#0", width=0, stretch=tk.NO)  # Hidden index column
+# table_tree.column("time", anchor=tk.W, width=100)
+# table_tree.column("type", anchor=tk.W, width=100)
+# table_tree.column("button", anchor=tk.W, width=100)
+# table_tree.column("pos", anchor=tk.W, width=150)
+# table_tree.column("color", anchor=tk.W, width=150)
+
+# # Define headings
+# table_tree.heading("#0", text="", anchor=tk.W)  # Hidden index column
+# table_tree.heading("time", text="Time", anchor=tk.W)
+# table_tree.heading("type", text="Type", anchor=tk.W)
+# table_tree.heading("button", text="Button", anchor=tk.W)
+# table_tree.heading("pos", text="Position", anchor=tk.W)
+# table_tree.heading("color", text="Color", anchor=tk.W)
+
+# # Add the Treeview to the table_tab with a scrollbar
+# table_tree.pack(fill="both", expand=True)
+
+# # Create a button to load and display JSON data
+# display_json_button = tk.Button(right_frame, text="Display JSON Data", command=load_and_display_json)
+# display_json_button.pack(pady=20)
+
+# # Add stats_text to stats_tab
+# stats_text = tk.Text(stats_tab, wrap=tk.WORD, state=tk.DISABLED)
+# stats_text.pack(side="left", fill="both", expand=True)
+
+# text_scrollbar = ttk.Scrollbar(stats_tab, orient="vertical", command=stats_text.yview)
+# text_scrollbar.pack(side="right", fill="y")
+# stats_text.configure(yscrollcommand=text_scrollbar.set)
+
+# # Create checkboxes for comparison options
+# comparison_frame = tk.LabelFrame(left_frame, text="Comparison Options", padx=10, pady=10)
+# comparison_frame.pack(pady=10)
+
+# time_var = tk.BooleanVar(value=False)
+# color_var = tk.BooleanVar(value=False)
+# pos_var = tk.BooleanVar(value=False)
+
+# tk.Checkbutton(comparison_frame, text="Compare Time", variable=time_var).pack(anchor="w")
+# tk.Checkbutton(comparison_frame, text="Compare Color", variable=color_var).pack(anchor="w")
+# tk.Checkbutton(comparison_frame, text="Compare Position", variable=pos_var).pack(anchor="w")
+
+# # Running the main application loop
+# root.mainloop()
