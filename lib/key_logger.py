@@ -1,11 +1,9 @@
 from pynput import mouse, keyboard
-from time import time, sleep
+from time import time
 import json
 import os
 from my_utils import count_down_timer
 from color_check import check_color
-
-OUTPUT_FILENAME = 'tkinter'
 
 class EventType:
     KEYDOWN = 'keyDown'
@@ -19,7 +17,6 @@ class KeyLogger:
         self.min_move_interval = min_move_interval
         self.mouse_listener = None
         self.start_time = None
-        self.unreleased_keys = []
         self.input_events = []
         self.last_move_time = 0  # Initialize last move time
 
@@ -29,7 +26,13 @@ class KeyLogger:
     def record_event(self, event_type, event_time, button, pos=None, color=None):
         if str(button) == "Key.esc":
             return
-       
+
+          # Convert button to string if it's a special key
+        button_str = str(button)
+        if hasattr(button, 'char') and button.char:
+            button_str = button.char
+        elif hasattr(button, 'name'):
+            button_str = button.name
 
         self.input_events.append({
             'time': event_time,
@@ -39,29 +42,24 @@ class KeyLogger:
             'color': color
         })
         
+        # Improved terminal output ###
         if event_type == EventType.CLICK:
-            print(f'{event_type} on {button} pos {pos} color {color} at {round(event_time, 4)}')
+            print(f'{event_type} on {button_str} at {pos} with color {color} at {round(event_time, 4)}')
+        elif event_type == EventType.KEYDOWN:
+            print(f'{event_type} "{button_str}" at {round(event_time, 4)}')
+        elif event_type == EventType.KEYUP:
+            print(f'{event_type} "{button_str}" at {round(event_time, 4)}')
         else:
-            pos_str = f'pos {pos}' if pos else 'no position'
+            pos_str = f'at {pos}' if pos else 'no position'
             print(f'{event_type} {pos_str} at {round(event_time, 4)}')
-            
-    def on_press(self, key):
-        # if key in self.unreleased_keys:
-        #     return
-        # else:
-        #     self.unreleased_keys.append(key)
 
+    def on_press(self, key):
         try:
             self.record_event(EventType.KEYDOWN, self.elapsed_time(), key.char)
         except AttributeError:
             self.record_event(EventType.KEYDOWN, self.elapsed_time(), key)
-        
-    def on_release(self, key):
-        try:
-            self.unreleased_keys.remove(key)
-        except ValueError:
-            print(f'ERROR: {key} not in unreleased_keys')
 
+    def on_release(self, key):
         try:
             self.record_event(EventType.KEYUP, self.elapsed_time(), key.char)
         except AttributeError:
@@ -107,5 +105,3 @@ class KeyLogger:
         file_path = os.path.join(script_dir, 'recordings', f'{output_filename}.json')
         with open(file_path, "w") as outfile:
             json.dump(self.input_events, outfile, indent=4)
-
-
