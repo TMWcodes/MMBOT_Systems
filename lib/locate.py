@@ -67,4 +67,4 @@ def get_starting_position(locations, target_key):
                 else:
                     print(f"Image {value} not found.")
     return False  # None of the images were found, return False
-#
+

@@ -3,7 +3,8 @@ from time import sleep, time
 import os
 import json
 from mouse_movement_1 import move_mouse_with_easing, generate_spline_path, create_bezier_path
-from my_utils import vary_coordinates, check_color
+from my_utils import vary_coordinates
+from color_check import check_color
 from key_logger import EventType
 
 def playActions(filename, path_type='spline', vary_coords=False, variation=0.01, ignore_move_actions=False):

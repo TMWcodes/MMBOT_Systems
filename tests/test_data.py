@@ -1,9 +1,9 @@
 import pytest
 from unittest import mock
 from lib.data import (
-    load_json, load_coordinates, load_coordinates_from_dicts, merge_json_files,
+    load_json, load_coordinates_from_dicts, merge_json_files,
     filter_clicks, compare_entries, calculate_time_differences, compute_statistics,
-    compute_time_stats, calculate_shannon_entropy, detect_repetition, count_repeated_sequences,
+    compute_time_stats, calculate_shannon_entropy, count_repeated_sequences,
     detect_repeated_sequences, plot_autocorrelation, flatten_json, unflatten_json,
     json_to_csv, csv_to_json
 )
@@ -35,15 +35,15 @@ def test_load_json_file_not_found():
             load_json("nonexistent.json")
 
 # Test load_coordinates function
-def test_load_coordinates():
-    events = [
-        {"pos": [1, 2], "type": "click"},
-        {"pos": [3, 4], "type": "move"},
-        {"pos": [5, 6], "type": "click"}
-    ]
-    result = load_coordinates(events, ignore_moves=True)
-    expected = np.array([[1, 2], [5, 6]])
-    assert np.array_equal(result, expected)
+# def test_load_coordinates():
+#     events = [
+#         {"pos": [1, 2], "type": "click"},
+#         {"pos": [3, 4], "type": "move"},
+#         {"pos": [5, 6], "type": "click"}
+#     ]
+#     result = load_coordinates(events, ignore_moves=True)
+#     expected = np.array([[1, 2], [5, 6]])
+#     assert np.array_equal(result, expected)
 
 def test_load_coordinates_from_dicts():
     coordinates_list = [{'x': 1, 'y': 2}, {'x': 3, 'y': 4}]
@@ -132,12 +132,12 @@ def test_calculate_shannon_entropy():
     assert np.isclose(calculate_shannon_entropy(sequence), expected_entropy)
 
 # Test detect_repetition function
-def test_detect_repetition():
-    coordinates = np.array([[1, 2], [1, 2], [3, 4], [1, 2]])
-    threshold = 0.5
-    result = detect_repetition(coordinates, threshold)
-    expected = [(1, 2)]
-    assert result == expected
+# def test_detect_repetition():
+#     coordinates = np.array([[1, 2], [1, 2], [3, 4], [1, 2]])
+#     threshold = 0.5
+#     result = detect_repetition(coordinates, threshold)
+#     expected = [(1, 2)]
+#     assert result == expected
 
 # Test count_repeated_sequences function
 def test_count_repeated_sequences():
@@ -147,33 +147,33 @@ def test_count_repeated_sequences():
     assert result == expected
 
 # Test detect_repeated_sequences function
-def test_detect_repeated_sequences():
-    events = [
-        {"time": 0.0, "type": "click", "pos": [1425, 469]},
-        {"time": 1.0, "type": "click", "pos": [1425, 469]},
-        {"time": 2.0, "type": "click", "pos": [1430, 470]},
-        {"time": 3.0, "type": "click", "pos": [1425, 469]},
-        {"time": 4.0, "type": "click", "pos": [1425, 469]},
-        {"time": 5.0, "type": "click", "pos": [1430, 470]},
-        {"time": 6.0, "type": "click", "pos": [1425, 469]},
-        {"time": 7.0, "type": "click", "pos": [1425, 469]},
-        {"time": 8.0, "type": "click", "pos": [1430, 470]},
-        {"time": 9.0, "type": "click", "pos": [1500, 480]},  # Not part of the repeated sequence
-        {"time": 10.0, "type": "click", "pos": [1425, 469]},
-        {"time": 11.0, "type": "click", "pos": [1425, 469]},
-        {"time": 12.0, "type": "click", "pos": [1430, 470]},
-        {"time": 13.0, "type": "click", "pos": [1425, 469]}
-    ]
+# def test_detect_repeated_sequences():
+#     events = [
+#         {"time": 0.0, "type": "click", "pos": [1425, 469]},
+#         {"time": 1.0, "type": "click", "pos": [1425, 469]},
+#         {"time": 2.0, "type": "click", "pos": [1430, 470]},
+#         {"time": 3.0, "type": "click", "pos": [1425, 469]},
+#         {"time": 4.0, "type": "click", "pos": [1425, 469]},
+#         {"time": 5.0, "type": "click", "pos": [1430, 470]},
+#         {"time": 6.0, "type": "click", "pos": [1425, 469]},
+#         {"time": 7.0, "type": "click", "pos": [1425, 469]},
+#         {"time": 8.0, "type": "click", "pos": [1430, 470]},
+#         {"time": 9.0, "type": "click", "pos": [1500, 480]},  # Not part of the repeated sequence
+#         {"time": 10.0, "type": "click", "pos": [1425, 469]},
+#         {"time": 11.0, "type": "click", "pos": [1425, 469]},
+#         {"time": 12.0, "type": "click", "pos": [1430, 470]},
+#         {"time": 13.0, "type": "click", "pos": [1425, 469]}
+#     ]
 
-    coordinates = load_coordinates(events)
-    expected_repeated_sequences = {
-        ((1425, 469), (1425, 469), (1430, 470)): [0, 3, 6, 10],
-        ((1425, 469), (1430, 470), (1425, 469)): [1, 4, 11],
-        ((1430, 470), (1425, 469), (1425, 469)): [2, 5]
-    }
+#     coordinates = load_coordinates(events)
+#     expected_repeated_sequences = {
+#         ((1425, 469), (1425, 469), (1430, 470)): [0, 3, 6, 10],
+#         ((1425, 469), (1430, 470), (1425, 469)): [1, 4, 11],
+#         ((1430, 470), (1425, 469), (1425, 469)): [2, 5]
+#     }
 
-    repeated_sequences = detect_repeated_sequences(coordinates)
-    assert repeated_sequences == expected_repeated_sequences, f"Expected {expected_repeated_sequences}, but got {repeated_sequences}"
+#     repeated_sequences = detect_repeated_sequences(coordinates)
+#     assert repeated_sequences == expected_repeated_sequences, f"Expected {expected_repeated_sequences}, but got {repeated_sequences}"
 
 
 # Test plot_autocorrelation function

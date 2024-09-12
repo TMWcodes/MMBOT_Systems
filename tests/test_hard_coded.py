@@ -4,10 +4,10 @@ import unittest
 from math import sqrt
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../lib')))
 from lib.hard_coded import (
-    filter_duplicate_colors,
-    are_colors_similar,
-    is_color_in_samples,
+    filter_duplicate_colors
 )
+from lib.color_check import (are_colors_similar,
+    is_color_in_samples)
 
 
 class TestColorFunctions(unittest.TestCase):

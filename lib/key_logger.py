@@ -2,7 +2,8 @@ from pynput import mouse, keyboard
 from time import time, sleep
 import json
 import os
-from my_utils import check_color, count_down_timer
+from my_utils import count_down_timer
+from color_check import check_color
 
 OUTPUT_FILENAME = 'tkinter'
 

@@ -1,7 +1,8 @@
 import pyautogui
 from time import time, sleep
 import random
-from my_utils import holdKey, initialize_pyautogui, compare_colors, check_color
+from my_utils import holdKey, initialize_pyautogui
+from color_check import check_color, compare_colors, are_colors_similar, is_color_in_samples
 from data import load_json, filter_clicks
 import json
 import numpy as np
@@ -53,17 +54,6 @@ def extract_colors_from_clicks(click_events):
 
 def filter_duplicate_colors(colors):
     return list(set(colors))
-
-
-def are_colors_similar(color1, color2, tolerance):
-    squared_distance = sum((comp1 - comp2) ** 2 for comp1, comp2 in zip(color1, color2))
-    return squared_distance <= tolerance ** 2
-
-def is_color_in_samples(color, samples, tolerance):
-    for sample in samples:
-        if are_colors_similar(color, sample, tolerance):
-            return sample
-    return None
 
 
 def process_coordinates(coordinates, unique_colors, tolerance=10):

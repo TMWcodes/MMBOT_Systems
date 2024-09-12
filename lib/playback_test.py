@@ -2,7 +2,7 @@ import pyautogui
 from time import sleep, time
 import os #import
 import json #parse
-from my_utils import check_color
+from color_check import check_color
 from mouse_movement_1 import move_mouse_with_easing, generate_spline_path, create_bezier_path
    
 
