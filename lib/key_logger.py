@@ -46,10 +46,10 @@ class KeyLogger:
             print(f'{event_type} {pos_str} at {round(event_time, 4)}')
             
     def on_press(self, key):
-        if key in self.unreleased_keys:
-            return
-        else:
-            self.unreleased_keys.append(key)
+        # if key in self.unreleased_keys:
+        #     return
+        # else:
+        #     self.unreleased_keys.append(key)
 
         try:
             self.record_event(EventType.KEYDOWN, self.elapsed_time(), key.char)
