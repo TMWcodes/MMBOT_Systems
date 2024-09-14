@@ -8,15 +8,11 @@ from color_check import check_color
 from key_logger import EventType
 
 def playActions(filename, path_type='spline', vary_coords=False, variation=0.01, ignore_move_actions=False):
-    # Check if the file exists in the expected directory
     script_dir = os.path.dirname(__file__)
     file_path = os.path.join(script_dir, filename)
     print(f"file_path is {file_path}")
 
     log_data = []
-    start_time = time()
-    
-    # Initialize the playback start time
     playback_start_time = time()
 
     try:
@@ -29,44 +25,42 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
 
                 if action['button'] == 'Key.esc':
                     break
-                
-                # Calculate elapsed time since playback started
+
                 actual_elapsed_total = time() - playback_start_time
-                
-                # Perform action
+
+                # Handle key down event
                 if action['type'] == EventType.KEYDOWN:
                     key = convertKey(action['button'])
-                    pyautogui.keyDown(key)
-                    # print(f"keyDown on {action['button']}")
+                    
+                    # Handling combination keys like 'ctrl+z'
+                    if key == 'z' and 'ctrlleft' in [convertKey(action['button']) for action in data[:index]]:
+                        pyautogui.hotkey('ctrlleft', 'z')  # If 'Ctrl+Z' was pressed, use hotkey
+                    else:
+                        pyautogui.keyDown(key)
 
-                    # Log keyDown event
-                    log_data.append({
-                        'time': actual_elapsed_total,
-                        'type': EventType.KEYDOWN,
-                        'button': action['button'],
-                        'pos': None,
-                        'color': None
-                    })
+                    log_data.append({'time': actual_elapsed_total, 'type': EventType.KEYDOWN, 'button': action['button'], 'pos': None, 'color': None})
 
+                # Handle key up event
                 elif action['type'] == EventType.KEYUP:
                     key = convertKey(action['button'])
                     pyautogui.keyUp(key)
-                    # print(f"keyUp on {action['button']}")
+                    log_data.append({'time': actual_elapsed_total, 'type': EventType.KEYUP, 'button': action['button'], 'pos': None, 'color': None})
 
-                    # Log keyUp event
-                    log_data.append({
-                        'time': actual_elapsed_total,
-                        'type': EventType.KEYUP,
-                        'button': action['button'],
-                        'pos': None,
-                        'color': None
-                    })
+                # Handle mouse down event
+                elif action['type'] == EventType.MOUSE_DOWN:
+                    pyautogui.mouseDown(x=action['pos'][0], y=action['pos'][1], button=convertKey(action['button']))
+                    log_data.append({'time': actual_elapsed_total, 'type': EventType.MOUSE_DOWN, 'button': action['button'], 'pos': action['pos'], 'color': None})
 
-                elif action['type'] == EventType.MOVE or action['type'] == EventType.CLICK:
+                # Handle mouse up event
+                elif action['type'] == EventType.MOUSE_UP:
+                    pyautogui.mouseUp(x=action['pos'][0], y=action['pos'][1], button=convertKey(action['button']))
+                    log_data.append({'time': actual_elapsed_total, 'type': EventType.MOUSE_UP, 'button': action['button'], 'pos': action['pos'], 'color': None})
+
+                # Handle move or click
+                elif action['type'] == EventType.CLICK or action['type'] == EventType.MOVE:
                     current_pos = pyautogui.position()
                     target_pos = (action['pos'][0], action['pos'][1])
 
-                    # Apply coordinate variation if enabled
                     if vary_coords:
                         x_var, y_var = vary_coordinates(target_pos[0], target_pos[1], variation)
                         target_pos = (target_pos[0] + x_var, target_pos[1] + y_var)
@@ -80,30 +74,20 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
                             pyautogui.moveTo(point[0], point[1], duration=0.1, tween=pyautogui.easeInQuad)
                     elif path_type == 'none':
                         pyautogui.moveTo(target_pos[0], target_pos[1], duration=0.1)
-                    
+
                     if action['type'] == EventType.CLICK:
                         color = check_color(target_pos)
-                        # Log click event
-                        log_data.append({
-                            'time': actual_elapsed_total,
-                            'type': EventType.CLICK,
-                            'button': action['button'],
-                            'pos': target_pos,
-                            'color': color
-                        })
+                        log_data.append({'time': actual_elapsed_total, 'type': EventType.CLICK, 'button': action['button'], 'pos': target_pos, 'color': color})
                         pyautogui.click(target_pos[0], target_pos[1], button='left' if action['button'] == 'Button.left' else 'right', duration=0.25)
-                
-                # Sleep until next action
+
+                # Sleep between actions based on timing
                 try:
                     next_action = data[index + 1]
                 except IndexError:
                     break
 
-                # Calculate the expected time based on the original recording
                 expected_time = next_action['time']
                 actual_elapsed_total = time() - playback_start_time
-
-                # Adjust the sleep time to align with the original timing
                 adjusted_sleep_time = max(expected_time - actual_elapsed_total, 0)
 
                 print(f"\nProcessing action: {action['button']}, {action['type']} at {action.get('pos', 'None')}")
@@ -112,10 +96,10 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
                 print(f"Adjusted sleep time: {adjusted_sleep_time} seconds (after correction)")
 
                 sleep(adjusted_sleep_time)
-                
-        # Save logged data to a new JSON file in the log_records folder
+
+        # Save log data
         log_dir = os.path.join(script_dir, 'log_records')
-        os.makedirs(log_dir, exist_ok=True)  # Create the log_records directory if it doesn't exist
+        os.makedirs(log_dir, exist_ok=True)
         base_filename = os.path.splitext(os.path.basename(file_path))[0]
         log_record_path = os.path.join(log_dir, f'{base_filename}_log.json')
 
@@ -157,11 +141,21 @@ def convertKey(button):
         'Key.space': ' ',
         'enter': '\n',
         'backspace': '\b',
+        'Button.left': 'left',
+        'Button.right': 'right',
+        '\u001a': 'z',  # Special handling for Ctrl+Z
     }
 
-    cleaned_key = button.replace('Key.', '')
-    # print(cleaned_key)
-    if cleaned_key in PYNPUT_SPECIAL_CASE_MAP:
-        return PYNPUT_SPECIAL_CASE_MAP[cleaned_key]
+    if button.startswith('Key.'):
+        cleaned_key = button.replace('Key.', '')
+        if cleaned_key in PYNPUT_SPECIAL_CASE_MAP:
+            return PYNPUT_SPECIAL_CASE_MAP[cleaned_key]
+        return cleaned_key
 
-    return cleaned_key
+    # Handle button keys
+    if button.startswith('Button.'):
+        cleaned_key = button.replace('Button.', '')
+        return PYNPUT_SPECIAL_CASE_MAP.get(cleaned_key, cleaned_key)
+
+    # Handle character keys
+    return button

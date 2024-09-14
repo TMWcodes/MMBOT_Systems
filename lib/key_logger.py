@@ -10,6 +10,8 @@ class EventType:
     KEYUP = 'keyUp'
     CLICK = 'click'
     MOVE = 'move'
+    MOUSE_DOWN = 'mouseDown'
+    MOUSE_UP = 'mouseUp'
 
 class KeyLogger:
     def __init__(self, record_move_actions, min_move_interval):
@@ -68,12 +70,20 @@ class KeyLogger:
         if key == keyboard.Key.esc:
             self.mouse_listener.stop()
             raise keyboard.Listener.StopException
-
+    
     def on_click(self, x, y, button, pressed):
-        if not pressed:
-            color = check_color((x, y))
-            self.record_event(EventType.CLICK, self.elapsed_time(), button, (x, y), color)
+        color = None
+        try:
+            if pressed:
+                color = check_color((x, y))
+                self.record_event(EventType.MOUSE_DOWN, self.elapsed_time(), button, (x, y), color)
+            else:
+                self.record_event(EventType.MOUSE_UP, self.elapsed_time(), button, (x, y))
+                # self.record_event(EventType.CLICK, self.elapsed_time(), button, (x, y), color)
+        except Exception as e:
+            print(f"Error in on_click: {e}")
 
+            
     def on_move(self, x, y):
         if self.record_move_actions:
             current_time = time()
@@ -84,13 +94,13 @@ class KeyLogger:
                 self.last_move_time = current_time
 
     def run_listeners(self):
+        self.start_time = time()
         self.mouse_listener = mouse.Listener(on_click=self.on_click, on_move=self.on_move)
         self.mouse_listener.start()
 
         with keyboard.Listener(
                 on_press=self.on_press,
                 on_release=self.on_release) as listener:
-            self.start_time = time()
             listener.join()
 
         self.mouse_listener.join()
