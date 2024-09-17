@@ -124,7 +124,7 @@ def plot_autocorrelation_for_selected(file_path, repetitions, stats_text):
 def perform_clustering(file_path, n_clusters, stats_text):
     try:
         data = load_json(file_path)
-        coordinates = np.array([event.get('pos') for event in data if event.get('type') == 'click'])
+        coordinates = np.array([event.get('pos') for event in data if event.get('type') == 'mouseDown'])
 
         if n_clusters is None:
             n_clusters = opt_clusters(coordinates)

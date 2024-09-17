@@ -16,6 +16,7 @@ from data import (
     plot_autocorrelation,compute_time_stats, count_repeated_sequences, merge_json_files, json_to_dataframe
     
 )
+import tkinter as tk
 
 def elbow_method(coordinates, max_clusters):
     wcss = []
@@ -149,34 +150,64 @@ def play_files_sequentially(filenames, path_type, vary_coords, variation, delay,
             playActions(filename, path_type=path_type, vary_coords=vary_coords, variation=variation, ignore_move_actions=ignore_move_actions)
             time.sleep(delay)
 ## new
-def get_playback_config():
-    # Prompt for path type with the 'none' option added
-    path_type = simpledialog.askstring("Input", "Enter path type (none/spline/bezier):", initialvalue='none')
-    while path_type not in ['none', 'spline', 'bezier']:
-        path_type = simpledialog.askstring("Input", "Invalid input. Enter path type (none/spline/bezier):", initialvalue='none')
-    
-    config = {
-        'path_type': path_type,
-        'vary_coords': simpledialog.askstring("Input", "Vary coordinates? (yes/no)", initialvalue='no').lower() in ['yes', 'true', '1'],
-        'ignore_move_actions': simpledialog.askstring("Input", "Ignore move actions? (yes/no)", initialvalue='yes').lower() in ['yes', 'true', '1']
-    }
-    
-    # Only prompt for variation if vary_coords is True
-    if config['vary_coords']:
-        config['variation'] = simpledialog.askfloat("Input", "Enter variation:", initialvalue=0.01)
-    else:
-        config['variation'] = 0.0
 
-    # Ask for loop repetitions
-    config['loop_reps'] = simpledialog.askinteger("Input", "Enter number of times to loop:", initialvalue=1)
+def get_playback_config_window(parent):
+    top = tk.Toplevel(parent)
+    top.title("Playback Configuration")
+    top.grab_set()  # Make the window modal
 
-    # Only prompt for delay if loop_reps is greater than 1
-    if config['loop_reps'] > 1:
-        config['delay'] = simpledialog.askfloat("Input", "Enter delay between actions:", initialvalue=2)
-    else:
-        config['delay'] = 0.0  # Set delay to 0.0 if not looping
-    
+    config = {}  # Initialize config here
+
+    # Create input fields and labels
+    tk.Label(top, text="Enter path type (none/spline/bezier):").pack()
+    path_type_var = tk.StringVar(value='none')
+    path_type_entry = tk.Entry(top, textvariable=path_type_var)
+    path_type_entry.pack()
+
+    tk.Label(top, text="Vary coordinates? (yes/no):").pack()
+    vary_coords_var = tk.StringVar(value='no')
+    vary_coords_entry = tk.Entry(top, textvariable=vary_coords_var)
+    vary_coords_entry.pack()
+
+    tk.Label(top, text="Ignore move actions? (yes/no):").pack()
+    ignore_move_actions_var = tk.StringVar(value='yes')
+    ignore_move_actions_entry = tk.Entry(top, textvariable=ignore_move_actions_var)
+    ignore_move_actions_entry.pack()
+
+    tk.Label(top, text="Enter variation:").pack()
+    variation_var = tk.DoubleVar(value=0.01)
+    variation_entry = tk.Entry(top, textvariable=variation_var)
+    variation_entry.pack()
+
+    tk.Label(top, text="Enter number of times to loop:").pack()
+    loop_reps_var = tk.IntVar(value=1)
+    loop_reps_entry = tk.Entry(top, textvariable=loop_reps_var)
+    loop_reps_entry.pack()
+
+    tk.Label(top, text="Enter delay between actions:").pack()
+    delay_var = tk.DoubleVar(value=2)
+    delay_entry = tk.Entry(top, textvariable=delay_var)
+    delay_entry.pack()
+
+    # Function to close the window and get inputs
+    def on_ok():
+        config.update({
+            'path_type': path_type_var.get(),
+            'vary_coords': vary_coords_var.get().lower() in ['yes', 'true', '1'],
+            'ignore_move_actions': ignore_move_actions_var.get().lower() in ['yes', 'true', '1'],
+            'variation': variation_var.get(),
+            'loop_reps': loop_reps_var.get(),
+            'delay': delay_var.get()
+        })
+        top.destroy()  # Close the window after getting input
+
+    tk.Button(top, text="OK", command=on_ok).pack()
+
+    # Wait until the window is destroyed
+    top.wait_window()
+
     return config
+
 ##
 def get_time_stats(file_path, ignore_moves=True):
     try:
@@ -187,7 +218,7 @@ def get_time_stats(file_path, ignore_moves=True):
 
 def get_repeated_sequences_detailed(file_path, repetitions, min_sequence_length=5):
     data = load_json(file_path)
-    coordinates = [event.get('pos') for event in data if event.get('type') == 'click']
+    coordinates = [event.get('pos') for event in data if event.get('type') == 'mouseDown']
     
     # Duplicate the coordinates for the given number of repetitions
     extended_data = coordinates * repetitions
@@ -198,7 +229,7 @@ def get_repeated_sequences_detailed(file_path, repetitions, min_sequence_length=
 
 def process_repeated_sequences(file_path, repetitions, min_sequence_length=5):
     data = load_json(file_path)
-    coordinates = [event.get('pos') for event in data if event.get('type') == 'click']
+    coordinates = [event.get('pos') for event in data if event.get('type') == 'mouseDown']
     
     # Duplicate the coordinates for the given number of repetitions
     extended_data = coordinates * repetitions
@@ -209,7 +240,15 @@ def process_repeated_sequences(file_path, repetitions, min_sequence_length=5):
 
 def process_shannon_entropy(file_path):
     data = load_json(file_path)
-    coordinates = [event.get('pos') for event in data if event.get('type') == 'click']
+
+    coordinates = [tuple(event.get('pos')) for event in data if event.get('type') == 'mouseDown' and event.get('pos') is not None]
+
+
+
+    if not coordinates:
+        raise ValueError("No valid click positions found in the file.")
+    # Debugging statement
+    print(f"Extracted coordinates: {coordinates}")
     return calculate_shannon_entropy(coordinates)
 
 def merge_selected_json_files(filenames, output_filename):
@@ -249,7 +288,7 @@ def merge_selected_json_files(filenames, output_filename):
     
 def plot_autocorrelation_from_file(file_path, repetitions):
     data = load_json(file_path)
-    coordinates = [event.get('pos') for event in data if event.get('type') == 'click']
+    coordinates = [event.get('pos') for event in data if event.get('type') == 'mouseDown']
     autocorrelation_results = plot_autocorrelation(coordinates, repetitions=repetitions)
     return autocorrelation_results
 

@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog, messagebox, simpledialog
 from controller import (
-    play_files_sequentially, start_key_logger_with_filename, get_playback_config,
+    play_files_sequentially, start_key_logger_with_filename, get_playback_config_window,
     json_to_dataframe
 )
 import numpy as np
@@ -15,12 +15,12 @@ from data_processing import (
     plot_autocorrelation_for_selected, perform_clustering
 )
 
-def play_selected_actions():
+def play_selected_actions(root):
     filenames = file_listbox.get(0, tk.END)
     if not filenames:
         return
 
-    config = get_playback_config()
+    config = get_playback_config_window(root)
     
     # Assume the files could be from either recordings or log_records
     # Append directory paths based on file naming conventions or user selection
@@ -105,7 +105,7 @@ def main():
 
         'merge_json_files_action': lambda: merge_json_files_action(file_listbox),
         'start_key_logger_with_filename': start_key_logger_with_filename,
-        'play_selected_actions': play_selected_actions,
+        'play_selected_actions': lambda: play_selected_actions(root),
         'compare_selected_json': lambda: compare_selected_json(
             file_listbox.get(file_listbox.curselection()[0]), 
             file_listbox.get(file_listbox.curselection()[1]), 
