@@ -1,7 +1,7 @@
 import pyautogui
 from time import time, sleep
 import random
-from my_utils import holdKey, initialize_pyautogui
+from my_utils import holdKey, initialize_pyautogui, count_down_timer
 from color_check import check_color, compare_colors, are_colors_similar, is_color_in_samples
 from data import load_json, filter_clicks
 import json
@@ -10,6 +10,7 @@ import os
 from math import sqrt
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+
 
 def setup_logging(filename):
     log_dir = os.path.join(os.path.dirname(__file__), 'log_records')
@@ -220,8 +221,29 @@ def main():
     # check_colors_and_click(filename, unique_colors, match_by_index=False, click_delay=0.1, tolerance=10)
 
 
-    color_samples = [(129, 134, 8), (195, 145, 136), (196, 149, 141), (78, 51, 46), (163, 118, 98), (163, 114, 75), (198, 160, 142), (161, 110, 71), (170, 110, 100)]
-    find_and_move_to_color(color_samples, tolerance=10, sample_count=100)
+    # color_samples = [(129, 134, 8), (195, 145, 136), (196, 149, 141), (78, 51, 46), (163, 118, 98), (163, 114, 75), (198, 160, 142), (161, 110, 71), (170, 110, 100)]
+    # find_and_move_to_color(color_samples, tolerance=10, sample_count=100)
+
+
+
+
+
+    count_down_timer()
+    # Focus on the text editor
+    pyautogui.click(1016,225)
+
+    # Type text
+    pyautogui.typewrite("Test text")
+    sleep(0.5)
+
+    # Delete text
+    pyautogui.press('backspace', presses=9, interval=0.1)
+    sleep(0.5)
+
+    # Undo deletion with Ctrl+Z
+    pyautogui.keyDown('ctrl')
+    pyautogui.press('z')
+    pyautogui.keyUp('ctrl')
 
 
 

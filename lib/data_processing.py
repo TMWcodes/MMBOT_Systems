@@ -12,6 +12,11 @@ from controller import (
 
 # Compare two JSON files
 def compare_selected_json(file1, file2, time_var, color_var, pos_var, stats_text):
+    # Check if both files are selected
+    if not file1 or not file2:
+        messagebox.showwarning("Selection Error", "Please select two files.")
+        return
+
     try:
         # Load JSON data from the selected files
         data1 = load_json(file1)

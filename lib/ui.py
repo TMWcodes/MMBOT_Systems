@@ -42,7 +42,8 @@ def setup_ui(root, handlers):
     tk.Button(scrollable_frame, text="Move Up", command=handlers['move_up']).pack(pady=5)
     tk.Button(scrollable_frame, text="Move Down", command=handlers['move_down']).pack(pady=5)
     tk.Button(scrollable_frame, text="Merge Files", command=handlers['merge_json_files_action']).pack(pady=5)
-
+    # Add the new button for displaying JSON data
+    tk.Button(scrollable_frame, text="Display JSON", command=handlers['load_and_display_json']).pack(pady=5)
     # Play/Record buttons
     tk.Button(scrollable_frame, text="Play Selected Actions", command=handlers['play_selected_actions']).pack(pady=5)
     tk.Button(scrollable_frame, text="Start Key Logger", command=handlers['start_key_logger_with_filename']).pack(pady=5)
@@ -60,16 +61,16 @@ def setup_ui(root, handlers):
     tk.Checkbutton(comparison_frame, text="Compare Position", variable=pos_var).pack(anchor="w")
 
     # Analysis Buttons
+    tk.Button(scrollable_frame, text="Show Time Statistics", command=handlers['display_time_stats']).pack(pady=5)
+    tk.Button(scrollable_frame, text="Calculate Shannon Entropy", command=handlers['display_shannon_entropy']).pack(pady=5)
     tk.Button(scrollable_frame, text="Analyze Repeated Sequences", command=handlers['analyze_repeated_sequences']).pack(pady=5)
     tk.Button(scrollable_frame, text="View Repeated Sequences", command=handlers['display_repeated_sequences_detailed']).pack(pady=5)
     tk.Button(scrollable_frame, text="Compare Selected JSON", command=handlers['compare_selected_json']).pack(pady=5)
-    tk.Button(scrollable_frame, text="Show Time Statistics", command=handlers['display_time_stats']).pack(pady=5)
-    tk.Button(scrollable_frame, text="Calculate Shannon Entropy", command=handlers['display_shannon_entropy']).pack(pady=5)
+   
     tk.Button(scrollable_frame, text="Plot Autocorrelation", command=handlers['plot_autocorrelation_for_selected']).pack(pady=5)
     tk.Button(scrollable_frame, text="Cluster Coordinates", command=handlers['perform_clustering']).pack(pady=5)
 
-    # Add the new button for displaying JSON data
-    tk.Button(scrollable_frame, text="Display JSON", command=handlers['load_and_display_json']).pack(pady=5)
+    
 
     # Create a frame for the display area (right side) and Notebook (Tabbed Interface)
     right_frame = tk.Frame(root)

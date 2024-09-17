@@ -68,7 +68,7 @@ def merge_json_files(filenames, output_file_name='merged_file.json'):
     return merged_actions
 
 def filter_clicks(events):
-    return [event for event in events if event.get('type') == 'click']
+    return [event for event in events if event.get('type') == 'mouseDown']
 
 def compare_entries(data1, data2, compare_time=False, compare_color=True, compare_position=True):
     differences = []
@@ -329,7 +329,7 @@ def json_to_dataframe(json_file):
                     if (
                         next_row['type'] == 'keyUp' 
                         and next_row['button'] == key 
-                        and next_row['time'] - current_row['time'] <= 0.2
+                        and next_row['time'] - current_row['time'] <= 0.4
                     ):
                         # Combine 'keyDown' and 'keyUp' into a single 'keyPress' event
                         current_row['type'] = 'keyPress'

@@ -101,15 +101,11 @@ def main():
         'remove_selected': lambda: remove_selected(file_listbox),
         'move_up': lambda: move_up(file_listbox),
         'move_down': lambda: move_down(file_listbox),
+        'load_and_display_json': lambda: load_and_display_json(table_tree),
+
         'merge_json_files_action': lambda: merge_json_files_action(file_listbox),
-        'play_selected_actions': play_selected_actions,
         'start_key_logger_with_filename': start_key_logger_with_filename,
-        'analyze_repeated_sequences': lambda: analyze_repeated_sequences(file_listbox.get(file_listbox.curselection()[0]), 
-                                                                           simpledialog.askinteger("Repetitions", "Enter number of repetitions:", minvalue=1, maxvalue=100),
-                                                                           stats_text),
-        'display_repeated_sequences_detailed': lambda: display_repeated_sequences_detailed(file_listbox.get(file_listbox.curselection()[0]), 
-                                                                                          simpledialog.askinteger("Repetitions", "Enter number of repetitions:", minvalue=1, maxvalue=100),
-                                                                                          stats_text),
+        'play_selected_actions': play_selected_actions,
         'compare_selected_json': lambda: compare_selected_json(
             file_listbox.get(file_listbox.curselection()[0]), 
             file_listbox.get(file_listbox.curselection()[1]), 
@@ -123,13 +119,20 @@ def main():
                                                          stats_text),
         'display_shannon_entropy': lambda: display_shannon_entropy(file_listbox.get(file_listbox.curselection()[0]), 
                                                                    stats_text),
+        'analyze_repeated_sequences': lambda: analyze_repeated_sequences(file_listbox.get(file_listbox.curselection()[0]), 
+                                                                           simpledialog.askinteger("Repetitions", "Enter number of repetitions:", minvalue=1, maxvalue=100),
+                                                                           stats_text),
+        'display_repeated_sequences_detailed': lambda: display_repeated_sequences_detailed(file_listbox.get(file_listbox.curselection()[0]), 
+                                                                                          simpledialog.askinteger("Repetitions", "Enter number of repetitions:", minvalue=1, maxvalue=100),
+                                                                                          stats_text),
+        
+        
         'plot_autocorrelation_for_selected': lambda: plot_autocorrelation_for_selected(file_listbox.get(file_listbox.curselection()[0]), 
                                                                                        simpledialog.askinteger("Repetitions", "Enter number of repetitions:", minvalue=1, maxvalue=100),
                                                                                        stats_text),
         'perform_clustering': lambda: perform_clustering(file_listbox.get(file_listbox.curselection()[0]), 
                                                          simpledialog.askinteger("Number of Clusters", "Enter number of clusters (leave blank for auto):", minvalue=1, maxvalue=10, initialvalue=None),
-                                                         stats_text),
-        'load_and_display_json': lambda: load_and_display_json(table_tree)
+                                                         stats_text)
     }
 
     file_listbox, table_tree, stats_text, time_var, color_var, pos_var = setup_ui(root, handlers)
