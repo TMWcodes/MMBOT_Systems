@@ -104,7 +104,7 @@ def main():
         'load_and_display_json': lambda: load_and_display_json(table_tree),
 
         'merge_json_files_action': lambda: merge_json_files_action(file_listbox),
-        'start_key_logger_with_filename': start_key_logger_with_filename,
+        'start_key_logger_with_filename': lambda: start_key_logger_with_filename(root),
         'play_selected_actions': lambda: play_selected_actions(root),
         'compare_selected_json': lambda: compare_selected_json(
             file_listbox.get(file_listbox.curselection()[0]), 

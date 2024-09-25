@@ -100,17 +100,17 @@ def run_key_logger(output_filename, record_move_actions, min_move_interval):
     key_logger = KeyLogger(record_move_actions, min_move_interval)
     key_logger.start(output_filename)
 
-def start_key_logger_with_filename():
-    output_filename = simpledialog.askstring("Input", "Enter filename for recording:", initialvalue='default_name')
+def start_key_logger_with_filename(parent):
+    output_filename = simpledialog.askstring("Input", "Enter filename for recording:", parent=parent, initialvalue='default_name')
     if output_filename:
         # Prompt user for additional settings
-        record_move_actions = simpledialog.askstring("Input", "Record move actions? (yes/no):", initialvalue='yes')
+        record_move_actions = simpledialog.askstring("Input", "Record move actions? (yes/no):", parent=parent, initialvalue='yes')
         if record_move_actions.lower() in ['yes', 'y']:
             record_move_actions = True
         else:
             record_move_actions = False
 
-        min_move_interval = simpledialog.askfloat("Input", "Enter minimum time interval between move actions (seconds):", initialvalue=1.0)
+        min_move_interval = simpledialog.askfloat("Input", "Enter minimum time interval between move actions (seconds):", parent=parent, initialvalue=1.0)
         if min_move_interval is None:
             min_move_interval = 1.0
 
@@ -170,7 +170,7 @@ def get_playback_config_window(parent):
     vary_coords_entry.pack()
 
     tk.Label(top, text="Ignore move actions? (yes/no):").pack()
-    ignore_move_actions_var = tk.StringVar(value='yes')
+    ignore_move_actions_var = tk.StringVar(value='no')
     ignore_move_actions_entry = tk.Entry(top, textvariable=ignore_move_actions_var)
     ignore_move_actions_entry.pack()
 

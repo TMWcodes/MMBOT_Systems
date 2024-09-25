@@ -62,9 +62,24 @@ def capture_coordinates(num_positions=None, duration=None, interval=3):
     
     print(f"Capture complete. {len(captured_positions)} positions captured.")
     return captured_positions
-    
+
+
+# # percentage based variation
 def vary_coordinates(x, y, variation):
     x_variation = int(random.uniform(-variation, variation) * x)
     y_variation = int(random.uniform(-variation, variation) * y)
     return x_variation, y_variation
 
+# pixel based variation
+# def vary_coordinates(x, y, variation):
+#     x_variation = random.uniform(-variation, variation)  # Variation in pixel units
+#     y_variation = random.uniform(-variation, variation)  # Variation in pixel units
+#     new_x = int(x + x_variation)
+#     new_y = int(y + y_variation)
+    
+#     # Debugging output to check the variation and result
+#     print(f"Original position: ({x}, {y})")
+#     print(f"Variation applied: ({x_variation}, {y_variation})")
+#     print(f"New position with variation: ({new_x}, {new_y})")
+    
+#     return new_x, new_y
