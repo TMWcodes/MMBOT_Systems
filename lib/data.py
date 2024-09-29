@@ -68,23 +68,27 @@ def merge_json_files(filenames, output_file_name='merged_file.json'):
     return merged_actions
 
 def filter_clicks(events):
-    return [event for event in events if event.get('type') == 'mouseDown']
+    return [event for event in events if event.get('type') in ['mouseDown', 'mouseUp']]
 
 def compare_entries(data1, data2, compare_time=False, compare_color=True, compare_position=True):
     differences = []
     
     for i, (entry1, entry2) in enumerate(zip(data1, data2)):
-        pos1, color1, time1 = entry1.get('pos'), entry1.get('color'), entry1.get('time')
-        pos2, color2, time2 = entry2.get('pos'), entry2.get('color'), entry2.get('time')
+        pos1, color1, time1, type1 = entry1.get('pos'), entry1.get('color'), entry1.get('time'), entry1.get('type')
+        pos2, color2, time2, type2 = entry2.get('pos'), entry2.get('color'), entry2.get('time'), entry2.get('type')
 
         pos_diff = pos1 != pos2 if compare_position else False
         color_diff = color1 != color2 if compare_color else False
         time_diff = time1 != time2 if compare_time else False
+        type_diff = type1 != type2  # Always compare the type
 
-        if pos_diff or color_diff or time_diff:
+        if pos_diff or color_diff or time_diff or type_diff:
             diffs_file1 = []
             diffs_file2 = []
 
+            if type_diff:
+                diffs_file1.append(f"Type: {type1}")
+                diffs_file2.append(f"Type: {type2}")
             if compare_time and time_diff:
                 diffs_file1.append(f"Time: {time1}")
                 diffs_file2.append(f"Time: {time2}")
@@ -95,7 +99,7 @@ def compare_entries(data1, data2, compare_time=False, compare_color=True, compar
                 diffs_file1.append(f"Color: {color1}")
                 diffs_file2.append(f"Color: {color2}")
 
-            differences.append(f"Index {i}:\n  File 1 - {', '.join(diffs_file1)}\n  File 2 - {', '.join(diffs_file2)}")
+            differences.append(f"Index {i}: \"type\": \"{type1}\"\n  File 1 - {', '.join(diffs_file1)}\n  File 2 - {', '.join(diffs_file2)}")
 
     return differences
 # Calculate time differences between consecutive events with an option to ignore move actions
