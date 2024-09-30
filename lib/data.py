@@ -103,13 +103,27 @@ def compare_entries(data1, data2, compare_time=False, compare_color=True, compar
 
     return differences
 # Calculate time differences between consecutive events with an option to ignore move actions
-def calculate_time_differences(events, ignore_moves=False):
+def calculate_mouse_click_differences(events):
     time_diffs = []
-    filtered_events = [event for event in events if not (ignore_moves and event.get('type') == 'move')]
+    
+    # Filter for only mouseDown and mouseUp events
+    filtered_events = [event for event in events if event['type'] in ['mouseDown', 'mouseUp']]
     
     for i in range(1, len(filtered_events)):
-        time_diff = filtered_events[i]['time'] - filtered_events[i-1]['time']
+        if filtered_events[i-1]['type'] == 'mouseDown' and filtered_events[i]['type'] == 'mouseUp':
+            time_diff = filtered_events[i]['time'] - filtered_events[i-1]['time']
+            time_diffs.append(time_diff)
+    
+    return time_diffs
+
+def calculate_time_differences_between_mousedown(events):
+    time_diffs = []
+    mousedown_events = [event for event in events if event.get('type') == 'mouseDown']
+    
+    for i in range(1, len(mousedown_events)):
+        time_diff = mousedown_events[i]['time'] - mousedown_events[i-1]['time']
         time_diffs.append(time_diff)
+    
     return time_diffs
 
 # Compute min, max, and average time differences
@@ -124,24 +138,20 @@ def compute_statistics(time_diffs):
     
     return min_time, max_time, avg_time, std_time
 
-def compute_time_stats(filename, ignore_moves="yes"):
+def compute_click_time_stats(filename):
     events = load_json(filename)
-    time_diffs = calculate_time_differences(events, ignore_moves)
-    # Compute and print time statistics
-    min_time, max_time, avg_time, std_time = compute_statistics(time_diffs)
-    print(f"Min time between actions: {min_time:.3f} seconds")
-    print(f"Max time between actions: {max_time:.3f} seconds")
-    print(f"Average time between actions: {avg_time:.3f} seconds")
-    print(f"Standard deviation of time differences: {std_time} seconds")
-    if min_time is None:
-        min_time, max_time, avg_time, std_time = 0, 0, 0, 0
     
-    return min_time, max_time, avg_time, std_time
-    # if avg_time < 0.2 and std_time < 0.1:  # Example thresholds
-    #     print("Suspicious bot-like behavior detected!")
-    # else:
-    #     print("Likely human behavior.")
-    
+    # Get time differences for clicks (mouseDown -> mouseUp)
+    click_time_diffs = calculate_mouse_click_differences(events)
+    min_click, max_click, avg_click, std_click = compute_statistics(click_time_diffs) if click_time_diffs else (None, None, None, None)
+
+    # Get time differences between mouseDown events (mouseDown -> mouseDown)
+    mousedown_time_diffs = calculate_time_differences_between_mousedown(events)
+    min_mousedown, max_mousedown, avg_mousedown, std_mousedown = compute_statistics(mousedown_time_diffs) if mousedown_time_diffs else (None, None, None, None)
+
+    # Return both sets of stats instead of printing
+    return (min_click, max_click, avg_click, std_click), (min_mousedown, max_mousedown, avg_mousedown, std_mousedown)
+
 
 def calculate_shannon_entropy(sequence):
     unique, counts = np.unique(sequence, axis=0, return_counts=True)
@@ -364,7 +374,9 @@ def json_to_dataframe(json_file):
 
 # def main():
     
-
-    
+#     print("Recording Click Time Stats:")
+#     recording_click_stats = compute_click_time_stats('tree_photo_record.json')
+#     print("\nPlayback Log Click Time Stats:")
+#     playback_click_stats = compute_click_time_stats('tree_photo_record_log_2.json') 
 # if __name__ == "__main__":
 #     main()

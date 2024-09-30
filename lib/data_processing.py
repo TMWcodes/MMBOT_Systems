@@ -2,8 +2,9 @@ import os
 import numpy as np
 import tkinter as tk
 from tkinter import messagebox
+from data import compute_click_time_stats
 from controller import (
-    load_json, filter_clicks, compare_entries, get_time_stats, 
+    load_json, filter_clicks, compare_entries, 
     process_repeated_sequences, process_shannon_entropy,
     get_repeated_sequences_detailed, plot_autocorrelation_from_file, 
     cluster, opt_clusters
@@ -50,24 +51,39 @@ def compare_selected_json(file1, file2, time_var, color_var, pos_var, stats_text
 # Display time statistics
 def display_time_stats(file_path, ignore_moves, stats_text):
     try:
-        result = get_time_stats(file_path, ignore_moves)
-        if result is None:
+        # Directly call compute_click_time_stats
+        click_stats, mousedown_stats = compute_click_time_stats(file_path)
+
+        if click_stats is None or mousedown_stats is None:
             messagebox.showerror("Error", "Failed to compute time statistics.")
             return
-
-        min_time, max_time, avg_time, std_time = result
+        
+        # Unpack the results
+        (min_click, max_click, avg_click, std_click) = click_stats
+        (min_mousedown, max_mousedown, avg_mousedown, std_mousedown) = mousedown_stats
 
         # Update the stats display window
         stats_text.config(state=tk.NORMAL)
         stats_text.delete(1.0, "end")
-        stats_text.insert("end", f"Min time between actions: {min_time:.3f} seconds\n")
-        stats_text.insert("end", f"Max time between actions: {max_time:.3f} seconds\n")
-        stats_text.insert("end", f"Average time between actions: {avg_time:.3f} seconds\n")
-        stats_text.insert("end", f"Standard deviation: {std_time:.3f} seconds\n")
+
+        # Insert the statistics into the text widget
+        stats_text.insert("end", "MouseDown to MouseUp Stats:\n")
+        stats_text.insert("end", f"Min time: {min_click:.3f} seconds\n")
+        stats_text.insert("end", f"Max time: {max_click:.3f} seconds\n")
+        stats_text.insert("end", f"Average time: {avg_click:.3f} seconds\n")
+        stats_text.insert("end", f"Standard deviation: {std_click:.3f} seconds\n\n")
+        
+        stats_text.insert("end", "MouseDown to MouseDown Stats (Time between clicks):\n")
+        stats_text.insert("end", f"Min time: {min_mousedown:.3f} seconds\n")
+        stats_text.insert("end", f"Max time: {max_mousedown:.3f} seconds\n")
+        stats_text.insert("end", f"Average time: {avg_mousedown:.3f} seconds\n")
+        stats_text.insert("end", f"Standard deviation: {std_mousedown:.3f} seconds\n")
+
         stats_text.config(state=tk.DISABLED)
 
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
+
 
 # Analyze repeated sequences
 def analyze_repeated_sequences(file_path, repetitions, stats_text):

@@ -114,9 +114,11 @@ def main():
             pos_var.get(), 
             stats_text
         ),
-        'display_time_stats': lambda: display_time_stats(file_listbox.get(file_listbox.curselection()[0]), 
-                                                         messagebox.askyesno("Ignore Moves", "Ignore move actions?"), 
-                                                         stats_text),
+         'display_time_stats': lambda: display_time_stats(
+            file_listbox.get(file_listbox.curselection()[0]), 
+            messagebox.askyesno("Ignore Moves", "Ignore move actions?"), 
+            stats_text  # This will be the Text widget where stats will be displayed
+        ),
         'display_shannon_entropy': lambda: display_shannon_entropy(file_listbox.get(file_listbox.curselection()[0]), 
                                                                    stats_text),
         'analyze_repeated_sequences': lambda: analyze_repeated_sequences(file_listbox.get(file_listbox.curselection()[0]), 

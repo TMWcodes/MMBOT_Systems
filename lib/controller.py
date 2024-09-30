@@ -11,9 +11,9 @@ from key_logger import KeyLogger
 from tkinter import filedialog, simpledialog
 from data import (
     load_json, merge_json_files, 
-    filter_clicks, compare_entries, calculate_time_differences, 
-    compute_statistics, calculate_shannon_entropy, detect_repeated_sequences, compute_time_stats,
-    plot_autocorrelation,compute_time_stats, count_repeated_sequences, merge_json_files, json_to_dataframe
+    filter_clicks, compare_entries, compute_click_time_stats,
+    compute_statistics, calculate_shannon_entropy, detect_repeated_sequences,
+    plot_autocorrelation, count_repeated_sequences, merge_json_files, json_to_dataframe
     
 )
 import tkinter as tk
@@ -209,12 +209,15 @@ def get_playback_config_window(parent):
     return config
 
 ##
-def get_time_stats(file_path, ignore_moves=True):
-    try:
-        return compute_time_stats(file_path, ignore_moves)
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return None, None, None, None
+# def get_time_stats(file_path, ignore_moves=True):
+#     try:
+#         # Get all the statistics in one call
+#         (min_click, max_click, avg_click, std_click), (min_mousedown, max_mousedown, avg_mousedown, std_mousedown) = compute_click_time_stats(file_path)
+
+#         return (min_click, max_click, avg_click, std_click), (min_mousedown, max_mousedown, avg_mousedown, std_mousedown)
+#     except Exception as e:
+#         print(f"An error occurred: {e}")
+#         return None, None
 
 def get_repeated_sequences_detailed(file_path, repetitions, min_sequence_length=5):
     data = load_json(file_path)
