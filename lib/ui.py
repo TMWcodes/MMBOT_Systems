@@ -68,7 +68,7 @@ def setup_ui(root, handlers):
     tk.Button(scrollable_frame, text="Analyze and View Repeated Sequences", command=handlers['analyze_and_display_repeated_sequences']).pack(pady=5)
    
     tk.Button(scrollable_frame, text="Plot Autocorrelation", command=handlers['plot_autocorrelation_for_selected']).pack(pady=5)
-    tk.Button(scrollable_frame, text="Cluster Coordinates", command=handlers['perform_clustering']).pack(pady=5)
+    tk.Button(scrollable_frame, text="Perform Clustering", command=handlers['perform_clustering']).pack(pady=5)
 
     
 

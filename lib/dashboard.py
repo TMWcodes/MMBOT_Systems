@@ -129,9 +129,7 @@ def main():
         'plot_autocorrelation_for_selected': lambda: plot_autocorrelation_for_selected(file_listbox.get(file_listbox.curselection()[0]), 
                                                                                        simpledialog.askinteger("Repetitions", "Enter number of repetitions:", minvalue=1, maxvalue=100),
                                                                                        stats_text),
-        'perform_clustering': lambda: perform_clustering(file_listbox.get(file_listbox.curselection()[0]), 
-                                                         simpledialog.askinteger("Number of Clusters", "Enter number of clusters (leave blank for auto):", minvalue=1, maxvalue=10, initialvalue=None),
-                                                         stats_text)
+        'perform_clustering': lambda: perform_clustering(file_listbox.get(file_listbox.curselection()[0]), stats_text)
     }
 
     file_listbox, table_tree, stats_text, time_var, color_var, pos_var = setup_ui(root, handlers)

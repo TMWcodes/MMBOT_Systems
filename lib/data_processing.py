@@ -123,18 +123,15 @@ def plot_autocorrelation_for_selected(file_path, repetitions, stats_text):
         messagebox.showerror("Error", f"An error occurred: {e}")
 
 # Perform clustering
-def perform_clustering(file_path, n_clusters, stats_text):
+def perform_clustering(file_path, stats_text):
     try:
         data = load_json(file_path)
         coordinates = np.array([event.get('pos') for event in data if event.get('type') == 'mouseDown'])
 
+        # Always determine the optimal number of clusters
+        n_clusters = opt_clusters(coordinates)
         if n_clusters is None:
-            n_clusters = opt_clusters(coordinates)
-            if n_clusters is None:
-                messagebox.showerror("Error", "Could not determine optimal number of clusters.")
-                return
-        elif n_clusters < 1:
-            messagebox.showerror("Error", "Number of clusters must be at least 1.")
+            messagebox.showerror("Error", "Could not determine the optimal number of clusters.")
             return
 
         # Perform clustering
@@ -142,9 +139,11 @@ def perform_clustering(file_path, n_clusters, stats_text):
 
         stats_text.config(state=tk.NORMAL)
         stats_text.delete(1.0, "end")
+        stats_text.insert("end", f"Number of clusters: {n_clusters}\n")
         stats_text.insert("end", f"Cluster centers:\n{kmeans.cluster_centers_}\n")
         stats_text.insert("end", f"Labels:\n{kmeans.labels_}\n")
         stats_text.config(state=tk.DISABLED)
 
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
+

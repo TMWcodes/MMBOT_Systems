@@ -26,10 +26,10 @@ def elbow_method(coordinates, max_clusters):
         kmeans.fit(coordinates)
         wcss.append(kmeans.inertia_)
 
-    plt.plot(range(1, max_clusters + 1), wcss, marker="o")
-    plt.title('Elbow Method')
-    plt.xlabel('Number of clusters')
-    plt.ylabel('WCSS')
+    # plt.plot(range(1, max_clusters + 1), wcss, marker="o")
+    # plt.title('Elbow Method')
+    # plt.xlabel('Number of clusters')
+    # plt.ylabel('WCSS')
     # plt.show()
 
     first_derivative = np.diff(wcss)
@@ -48,10 +48,10 @@ def silhouette_scores(coordinates, max_clusters):
         silhouette_scores.append(score)
 
     if silhouette_scores:
-        plt.plot(range(2, max_clusters + 1), silhouette_scores)
-        plt.title('Silhouette Scores')
-        plt.xlabel('Number of clusters')
-        plt.ylabel('Silhouette Score')
+        # plt.plot(range(2, max_clusters + 1), silhouette_scores)
+        # plt.title('Silhouette Scores')
+        # plt.xlabel('Number of clusters')
+        # plt.ylabel('Silhouette Score')
         # plt.show()
 
         optimal_clusters = np.argmax(silhouette_scores) + 2
@@ -214,6 +214,10 @@ def process_repeated_sequences(file_path, repetitions, min_sequence_length=5, mi
     data = load_json(file_path)
     coordinates = [event.get('pos') for event in data if event.get('type') == 'mouseDown']
 
+
+    # Count mouseDown events
+    mouse_down_count = len(coordinates)
+    
     # Duplicate the coordinates for the given number of repetitions
     extended_data = coordinates * repetitions
 
