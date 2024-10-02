@@ -77,6 +77,7 @@ def plot_autocorrelation(sequence, repetitions, figsize=(12, 6), max_lag=50):
     # plt.show()  # Display the plot
     # plt.close()  # Close the figure to prevent empty windows
     
+ 
     # print(f"Autocorrelation metric for {repetitions} repetitions: {autocorr_metric}")
 
     return autocorr_metric

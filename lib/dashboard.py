@@ -10,8 +10,7 @@ import os
 from file_operations import add_files, remove_selected, move_down, move_up, merge_json_files_action
 from ui import setup_ui
 from data_processing import (
-    compare_selected_json, display_time_stats, analyze_repeated_sequences,
-    display_repeated_sequences_detailed, display_shannon_entropy, 
+    compare_selected_json, display_time_stats,analyze_and_display_repeated_sequences ,display_shannon_entropy, 
     plot_autocorrelation_for_selected, perform_clustering
 )
 
@@ -121,12 +120,10 @@ def main():
         ),
         'display_shannon_entropy': lambda: display_shannon_entropy(file_listbox.get(file_listbox.curselection()[0]), 
                                                                    stats_text),
-        'analyze_repeated_sequences': lambda: analyze_repeated_sequences(file_listbox.get(file_listbox.curselection()[0]), 
-                                                                           simpledialog.askinteger("Repetitions", "Enter number of repetitions:", minvalue=1, maxvalue=100),
-                                                                           stats_text),
-        'display_repeated_sequences_detailed': lambda: display_repeated_sequences_detailed(file_listbox.get(file_listbox.curselection()[0]), 
-                                                                                          simpledialog.askinteger("Repetitions", "Enter number of repetitions:", minvalue=1, maxvalue=100),
-                                                                                          stats_text),
+       'analyze_and_display_repeated_sequences': lambda: analyze_and_display_repeated_sequences(
+        file_listbox.get(file_listbox.curselection()[0]), 
+        simpledialog.askinteger("Repetitions", "Enter number of repetitions:", minvalue=1, maxvalue=100),
+        stats_text),
         
         
         'plot_autocorrelation_for_selected': lambda: plot_autocorrelation_for_selected(file_listbox.get(file_listbox.curselection()[0]), 

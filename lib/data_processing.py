@@ -5,9 +5,8 @@ from tkinter import messagebox
 from data import compute_click_time_stats
 from controller import (
     load_json, filter_clicks, compare_entries, 
-    process_repeated_sequences, process_shannon_entropy,
-    get_repeated_sequences_detailed, plot_autocorrelation_from_file, 
-    cluster, opt_clusters
+    process_repeated_sequences, process_shannon_entropy, plot_autocorrelation_from_file, 
+    cluster, opt_clusters, process_repeated_sequences
 )
 
 
@@ -85,25 +84,12 @@ def display_time_stats(file_path, ignore_moves, stats_text):
         messagebox.showerror("Error", f"An error occurred: {e}")
 
 
-# Analyze repeated sequences
-def analyze_repeated_sequences(file_path, repetitions, stats_text):
+def analyze_and_display_repeated_sequences(file_path, repetitions, stats_text):
     try:
-        repeated_sequence_count = process_repeated_sequences(file_path, repetitions)
+        repeated_sequence_count, repeated_sequences = process_repeated_sequences(file_path, repetitions)
         stats_text.config(state=tk.NORMAL)
         stats_text.delete(1.0, "end")
-        stats_text.insert("end", f"Number of repeated sequences across {repetitions} repetitions: {repeated_sequence_count}\n")
-        stats_text.config(state=tk.DISABLED)
-
-    except Exception as e:
-        messagebox.showerror("Error", f"An error occurred: {e}")
-
-# Display detailed repeated sequences
-def display_repeated_sequences_detailed(file_path, repetitions, stats_text):
-    try:
-        repeated_sequences = get_repeated_sequences_detailed(file_path, repetitions)
-
-        stats_text.config(state=tk.NORMAL)
-        stats_text.delete(1.0, "end")
+        stats_text.insert("end", f"Number of repeated sequences: {repeated_sequence_count}\n")
         for seq, positions in repeated_sequences.items():
             stats_text.insert("end", f"Sequence: {seq}\nPositions: {positions}\n\n")
         stats_text.config(state=tk.DISABLED)

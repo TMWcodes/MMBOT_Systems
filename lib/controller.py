@@ -210,27 +210,18 @@ def get_playback_config_window(parent):
     return config
 
 
-def get_repeated_sequences_detailed(file_path, repetitions, min_sequence_length=5):
+def process_repeated_sequences(file_path, repetitions, min_sequence_length=5, min_repetitions=2):
     data = load_json(file_path)
     coordinates = [event.get('pos') for event in data if event.get('type') == 'mouseDown']
-    
+
     # Duplicate the coordinates for the given number of repetitions
     extended_data = coordinates * repetitions
 
-    # Detect detailed repeated sequences
-    repeated_sequences = detect_repeated_sequences(extended_data, min_sequence_length)
-    return repeated_sequences
+    # Get the count and details of repeated sequences
+    repeated_sequence_count = count_repeated_sequences(extended_data, min_sequence_length, min_repetitions)
+    repeated_sequences = detect_repeated_sequences(extended_data, min_sequence_length, min_repetitions)
 
-def process_repeated_sequences(file_path, repetitions, min_sequence_length=5):
-    data = load_json(file_path)
-    coordinates = [event.get('pos') for event in data if event.get('type') == 'mouseDown']
-    
-    # Duplicate the coordinates for the given number of repetitions
-    extended_data = coordinates * repetitions
-
-    # Get the count of repeated sequences with fixed min_sequence_length
-    repeated_sequences = detect_repeated_sequences(extended_data, min_sequence_length)
-    return len(repeated_sequences)
+    return repeated_sequence_count, repeated_sequences
 
 def process_shannon_entropy(file_path):
     data = load_json(file_path)

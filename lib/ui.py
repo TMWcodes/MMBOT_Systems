@@ -65,8 +65,7 @@ def setup_ui(root, handlers):
     # Analysis Buttons
     tk.Button(scrollable_frame, text="Show Time Statistics", command=handlers['display_time_stats']).pack(pady=5)
     tk.Button(scrollable_frame, text="Calculate Shannon Entropy", command=handlers['display_shannon_entropy']).pack(pady=5)
-    tk.Button(scrollable_frame, text="Analyze Repeated Sequences", command=handlers['analyze_repeated_sequences']).pack(pady=5)
-    tk.Button(scrollable_frame, text="View Repeated Sequences", command=handlers['display_repeated_sequences_detailed']).pack(pady=5)
+    tk.Button(scrollable_frame, text="Analyze and View Repeated Sequences", command=handlers['analyze_and_display_repeated_sequences']).pack(pady=5)
    
     tk.Button(scrollable_frame, text="Plot Autocorrelation", command=handlers['plot_autocorrelation_for_selected']).pack(pady=5)
     tk.Button(scrollable_frame, text="Cluster Coordinates", command=handlers['perform_clustering']).pack(pady=5)
