@@ -2,7 +2,7 @@ import pyautogui
 from time import sleep, time
 import os
 import json
-from mouse_movement_1 import move_mouse_with_easing, generate_spline_path, create_bezier_path
+from mouse_movement_1 import threaded_mouse_movement, move_mouse_with_easing, generate_spline_path, create_bezier_path
 from my_utils import vary_coordinates
 from color_check import check_color
 from key_logger import EventType
@@ -54,28 +54,31 @@ def playActions(filename, path_type='spline', vary_coords=False, variation=0.01,
                     # Mouse movement based on path_type
                     if path_type == 'spline':
                         points = generate_spline_path(current_pos, target_pos)
-                        move_mouse_with_easing(zip(*(i.astype(int) for i in points)), duration=0.1, easing_function=pyautogui.easeInOutQuad)
+                        # Use threaded_mouse_movement to keep the GUI responsive
+                        threaded_mouse_movement(zip(*(i.astype(int) for i in points)), duration=0.1, easing_function=pyautogui.easeInOutQuad)
                     elif path_type == 'bezier':
                         path = create_bezier_path(current_pos, target_pos)
+                        # Loop through points and use threading for each point to ensure responsiveness
                         for point in path:
-                            pyautogui.moveTo(point[0], point[1], duration=0.1, tween=pyautogui.easeInQuad)
+                            threaded_mouse_movement([point], duration=0.1, easing_function=pyautogui.easeInQuad)
                     elif path_type == 'none':
+                        # Direct movement without threading for simplicity
                         pyautogui.moveTo(target_pos[0], target_pos[1], duration=0.1)
 
                     # Handle mouse down events
                     if action['type'] == EventType.MOUSE_DOWN:
                         print(f"Mouse down at {target_pos}")
-                        # color = check_color(target_pos)
+                        color_down = check_color(target_pos)
                         pyautogui.mouseDown(x=target_pos[0], y=target_pos[1], button=convertKey(action['button']))
                         # Store log for mouse down
-                        log_data.append({'time': actual_elapsed_total, 'type': EventType.MOUSE_DOWN, 'button': action['button'], 'pos': target_pos, 'color': None})
+                        log_data.append({'time': actual_elapsed_total, 'type': EventType.MOUSE_DOWN, 'button': action['button'], 'pos': target_pos, 'color': color_down})
 
                     # Handle mouse up events
                     elif action['type'] == EventType.MOUSE_UP:
                         print(f"Mouse up at {target_pos}")
-                        color = check_color(target_pos)
+                        color_up = check_color(target_pos)
                         pyautogui.mouseUp(x=target_pos[0], y=target_pos[1], button=convertKey(action['button']))
-                        log_data.append({'time': actual_elapsed_total, 'type': EventType.MOUSE_UP, 'button': action['button'], 'pos': target_pos, 'color': color})
+                        log_data.append({'time': actual_elapsed_total, 'type': EventType.MOUSE_UP, 'button': action['button'], 'pos': target_pos, 'color': color_up})
 
                 # Handle typing events
                 if action['type'] == EventType.KEYDOWN:

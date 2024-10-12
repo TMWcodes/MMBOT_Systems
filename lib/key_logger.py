@@ -78,7 +78,8 @@ class KeyLogger:
                 color = check_color((x, y))
                 self.record_event(EventType.MOUSE_DOWN, self.elapsed_time(), button, (x, y), color)
             else:
-                self.record_event(EventType.MOUSE_UP, self.elapsed_time(), button, (x, y))
+                color = check_color((x, y))
+                self.record_event(EventType.MOUSE_UP, self.elapsed_time(), button, (x, y), color)
                 # self.record_event(EventType.CLICK, self.elapsed_time(), button, (x, y), color)
         except Exception as e:
             print(f"Error in on_click: {e}")

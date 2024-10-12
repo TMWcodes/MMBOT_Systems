@@ -70,7 +70,14 @@ def compare_colors(coordinate, expected_color):
 
 
 def are_colors_similar(color1, color2, tolerance):
+    # If either color is None, return False
+    if color1 is None or color2 is None:
+        return False
+    
+    # Calculate squared Euclidean distance between color components
     squared_distance = sum((comp1 - comp2) ** 2 for comp1, comp2 in zip(color1, color2))
+    
+    # Return True if the squared distance is within the tolerance range
     return squared_distance <= tolerance ** 2
 
 def is_color_in_samples(color, samples, tolerance):
